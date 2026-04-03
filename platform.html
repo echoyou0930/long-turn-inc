@@ -1,0 +1,2642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Long Turn INC - 管理平台</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f2942;
+            --accent: #c9a962;
+            --surface: #f8f9fb;
+            --surface-dark: #eef1f5;
+            --text: #1a1a2e;
+            --text-muted: #6b7280;
+            --border: #e2e8f0;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --shadow: 0 4px 24px rgba(15,41,66,0.08);
+            --shadow-lg: 0 12px 48px rgba(15,41,66,0.14);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Outfit',sans-serif; background:var(--surface); color:var(--text); min-height:100vh; }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            position:fixed; left:0; top:0; width:268px; height:100vh;
+            background:linear-gradient(180deg,#0f2942 0%,#071929 100%);
+            padding:28px 0; z-index:100; display:flex; flex-direction:column; overflow-y:auto;
+        }
+        .logo { padding:0 24px 20px; border-bottom:1px solid rgba(255,255,255,.1); margin-bottom:20px; text-align:center; }
+        .logo img { max-width:180px; height:auto; display:block; margin:0 auto 8px; }
+        .logo .sub { font-size:10px; color:var(--accent); text-transform:uppercase; letter-spacing:3px; margin-top:4px; }
+        .logo .tag { font-size:11px; color:rgba(255,255,255,.4); margin-top:4px; }
+        .company-info { margin-top:12px; text-align:left; }
+        .ci-item { font-size:10px; color:rgba(255,255,255,.55); line-height:1.7; padding:2px 0; word-break:break-all; }
+        @media(max-width:900px) { .company-info{display:none;} }
+        
+        /* ── Language Toggle ── */
+        .lang-toggle {
+            display:flex; align-items:center; gap:8px; padding:8px 14px;
+            background:rgba(255,255,255,.1); border-radius:8px; cursor:pointer;
+            margin:0 24px 20px; font-size:12px; color:rgba(255,255,255,.7);
+        }
+        .lang-toggle:hover { background:rgba(255,255,255,.15); }
+        .lang-toggle .active { color:var(--accent); font-weight:700; }
+        
+        .nav-section { padding:0 14px; margin-bottom:20px; }
+        .nav-section-title { font-size:10px; text-transform:uppercase; letter-spacing:2px; color:rgba(255,255,255,.3); padding:0 10px; margin-bottom:10px; }
+        .nav-item {
+            display:flex; align-items:center; gap:12px; padding:12px 14px;
+            color:rgba(255,255,255,.65); text-decoration:none; border-radius:10px;
+            margin-bottom:3px; transition:all .2s; cursor:pointer; font-size:13.5px; font-weight:500;
+        }
+        .nav-item:hover { background:rgba(255,255,255,.08); color:#fff; }
+        .nav-item.active { background:var(--accent); color:var(--primary); font-weight:700; }
+        .nav-item svg { width:18px; height:18px; flex-shrink:0; }
+        .nav-badge { margin-left:auto; background:var(--danger); color:#fff; font-size:10px; padding:2px 7px; border-radius:10px; font-weight:700; }
+
+        /* ── Main ── */
+        .main { margin-left:268px; min-height:100vh; padding:32px 44px; }
+        .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:36px; }
+        .page-header h2 { font-size:30px; font-weight:700; color:var(--primary); }
+        .page-header p { color:var(--text-muted); font-size:13px; margin-top:4px; }
+        .user-chip {
+            display:flex; align-items:center; gap:10px; padding:10px 18px;
+            background:#fff; border-radius:12px; box-shadow:var(--shadow);
+        }
+        .avatar { width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg,var(--accent),#a07830); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; }
+        .user-name { font-weight:600; font-size:13px; }
+        .user-role { font-size:11px; color:var(--text-muted); }
+
+        /* ── Sections ── */
+        .section { display:none; }
+        .section.active { display:block; animation:fadeIn .35s ease; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+        /* ── Stats ── */
+        .stats-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:20px; margin-bottom:32px; }
+        .stat-card {
+            background:#fff; border-radius:16px; padding:22px; box-shadow:var(--shadow);
+            transition:transform .3s,box-shadow .3s; border-left:4px solid transparent;
+        }
+        .stat-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); }
+        .stat-card.blue { border-color:var(--primary); }
+        .stat-card.gold { border-color:var(--accent); }
+        .stat-card.green { border-color:var(--success); }
+        .stat-card.red { border-color:var(--danger); }
+        .stat-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+        .stat-icon { width:44px; height:44px; border-radius:11px; display:flex; align-items:center; justify-content:center; }
+        .stat-icon.blue { background:rgba(15,41,66,.1); color:var(--primary); }
+        .stat-icon.gold { background:rgba(201,169,98,.15); color:#a07830; }
+        .stat-icon.green { background:rgba(5,150,105,.1); color:var(--success); }
+        .stat-icon.red { background:rgba(220,38,38,.1); color:var(--danger); }
+        .stat-trend { font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; }
+        .stat-trend.up { background:rgba(5,150,105,.1); color:var(--success); }
+        .stat-trend.neutral { background:rgba(107,114,128,.1); color:var(--text-muted); }
+        .stat-value { font-size:34px; font-weight:700; color:var(--primary); }
+        .stat-label { font-size:12px; color:var(--text-muted); margin-top:2px; }
+
+        /* ── Quick Actions ── */
+        .quick-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:32px; }
+        .quick-card {
+            background:#fff; border-radius:14px; padding:20px; text-align:center;
+            cursor:pointer; transition:all .25s; border:2px solid transparent; box-shadow:var(--shadow);
+        }
+        .quick-card:hover { border-color:var(--accent); transform:translateY(-3px); box-shadow:var(--shadow-lg); }
+        .quick-icon { font-size:28px; margin-bottom:10px; }
+        .quick-label { font-size:13px; font-weight:600; color:var(--text); }
+
+        /* ── Table ── */
+        .card { background:#fff; border-radius:16px; box-shadow:var(--shadow); overflow:hidden; margin-bottom:28px; }
+        .card-header { display:flex; justify-content:space-between; align-items:center; padding:18px 24px; border-bottom:1px solid var(--border); }
+        .card-title { font-size:16px; font-weight:600; }
+        .card-actions { display:flex; gap:10px; }
+        table { width:100%; border-collapse:collapse; }
+        th { text-align:left; padding:14px 22px; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); font-weight:600; background:var(--surface); border-bottom:1px solid var(--border); }
+        td { padding:16px 22px; font-size:13.5px; border-bottom:1px solid var(--border); }
+        tr:last-child td { border-bottom:none; }
+        tr:hover td { background:#fafbfc; }
+        .badge { display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border-radius:20px; font-size:11.5px; font-weight:600; }
+        .badge.pending { background:rgba(217,119,6,.1); color:var(--warning); }
+        .badge.approved { background:rgba(5,150,105,.1); color:var(--success); }
+        .badge.rejected { background:rgba(220,38,38,.1); color:var(--danger); }
+        .badge.active { background:rgba(15,41,66,.1); color:var(--primary); }
+        .badge.draft { background:rgba(107,114,128,.1); color:var(--text-muted); }
+        .act-btns { display:flex; gap:6px; flex-shrink:0; }
+        .act-btn { width:30px; height:30px; border-radius:7px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; background:var(--surface); transition:all .2s; font-size:14px; }
+        .act-btn:hover { background:var(--primary); color:#fff; }
+
+        /* ── Buttons ── */
+        .btn { display:inline-flex; align-items:center; gap:7px; padding:11px 22px; border-radius:10px; font-size:13.5px; font-weight:600; cursor:pointer; transition:all .2s; border:none; font-family:inherit; }
+        .btn-primary { background:var(--accent); color:var(--primary); }
+        .btn-primary:hover { background:#d4b572; transform:translateY(-1px); }
+        .btn-dark { background:var(--primary); color:#fff; }
+        .btn-dark:hover { background:#1a3d5c; }
+        .btn-outline { background:transparent; border:1.5px solid var(--border); color:var(--text); }
+        .btn-outline:hover { border-color:var(--primary); background:var(--primary); color:#fff; }
+        .btn-sm { padding:7px 14px; font-size:12px; }
+
+        /* ── SOP Cards ── */
+        .sop-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:22px; }
+        .sop-card {
+            background:#fff; border-radius:16px; padding:26px; box-shadow:var(--shadow);
+            transition:all .3s; border:2px solid transparent; cursor:pointer;
+        }
+        .sop-card:hover { border-color:var(--accent); transform:translateY(-4px); box-shadow:var(--shadow-lg); }
+        .sop-emoji { font-size:36px; margin-bottom:16px; }
+        .sop-card h3 { font-size:17px; font-weight:700; color:var(--primary); margin-bottom:8px; }
+        .sop-card p { font-size:13px; color:var(--text-muted); line-height:1.7; margin-bottom:18px; }
+        .sop-footer { display:flex; justify-content:space-between; align-items:center; padding-top:14px; border-top:1px solid var(--border); }
+        .sop-meta { font-size:11px; color:var(--text-muted); }
+
+        /* ── Forms ── */
+        .form-card { background:#fff; border-radius:16px; padding:30px; box-shadow:var(--shadow); margin-bottom:24px; }
+        .form-card-title { font-size:18px; font-weight:700; color:var(--primary); margin-bottom:6px; }
+        .form-card-sub { font-size:13px; color:var(--text-muted); margin-bottom:24px; padding-bottom:20px; border-bottom:1px solid var(--border); }
+        .form-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:20px; }
+        .form-group { margin-bottom:0; }
+        .form-group.full { grid-column:span 2; }
+        .form-label { display:block; font-size:12.5px; font-weight:600; margin-bottom:7px; }
+        .form-label .req { color:var(--danger); }
+        .form-input {
+            width:100%; padding:12px 16px; border:1.5px solid var(--border); border-radius:9px;
+            font-size:13.5px; font-family:inherit; transition:all .2s;
+        }
+        .form-input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(201,169,98,.12); }
+        textarea.form-input { min-height:90px; resize:vertical; }
+        .form-actions { display:flex; gap:12px; justify-content:flex-end; margin-top:24px; padding-top:20px; border-top:1px solid var(--border); }
+
+        /* ── Weekly Report ── */
+        .week-nav { display:flex; align-items:center; gap:14px; background:#fff; padding:14px 22px; border-radius:12px; box-shadow:var(--shadow); margin-bottom:24px; width:fit-content; }
+        .week-nav button { width:34px; height:34px; border-radius:8px; border:1.5px solid var(--border); background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+        .week-nav button:hover { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .week-label { font-weight:600; font-size:14px; min-width:180px; text-align:center; }
+        .report-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:22px; }
+        .report-block { background:#fff; border-radius:14px; padding:24px; box-shadow:var(--shadow); }
+        .report-block h3 { font-size:15px; font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+        .report-block textarea { width:100%; min-height:110px; padding:14px; border:1.5px solid var(--border); border-radius:9px; font-family:inherit; font-size:13.5px; resize:vertical; transition:border-color .2s; }
+        .report-block textarea:focus { outline:none; border-color:var(--accent); }
+
+        /* ── Modal ── */
+        .modal-overlay { position:fixed; inset:0; background:rgba(15,41,66,.55); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:1000; }
+        .modal-overlay.open { display:flex; }
+        .modal { background:#fff; border-radius:20px; width:90%; max-width:580px; max-height:90vh; overflow-y:auto; animation:modalIn .3s ease; }
+        @keyframes modalIn { from{opacity:0;transform:scale(.95) translateY(16px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        .modal-head { padding:22px 26px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+        .modal-head h3 { font-size:17px; font-weight:700; }
+        .modal-close { width:34px; height:34px; border-radius:9px; border:none; background:var(--surface); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; font-size:18px; }
+        .modal-close:hover { background:var(--danger); color:#fff; }
+        .modal-body { padding:26px; }
+        .modal-foot { padding:18px 26px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; }
+
+        /* ── Attendance ── */
+        .attendance-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin-bottom:24px; }
+        .att-day { background:#fff; border-radius:10px; padding:12px 8px; text-align:center; box-shadow:var(--shadow); }
+        .att-day .day-name { font-size:11px; color:var(--text-muted); font-weight:600; text-transform:uppercase; margin-bottom:6px; }
+        .att-day .day-num { font-size:20px; font-weight:700; color:var(--primary); margin-bottom:8px; }
+        .att-dot { width:8px; height:8px; border-radius:50%; margin:0 auto; }
+        .att-dot.present { background:var(--success); }
+        .att-dot.absent { background:var(--danger); }
+        .att-dot.leave { background:var(--warning); }
+        .att-dot.today { background:var(--accent); }
+
+        /* ── Sales Pipeline ── */
+        .pipeline { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:28px; }
+        .pipeline-col { background:#fff; border-radius:14px; padding:18px; box-shadow:var(--shadow); }
+        .pipeline-col-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:14px; padding-bottom:10px; border-bottom:2px solid var(--border); }
+        .pipeline-col-title.lead { border-color:#6366f1; color:#6366f1; }
+        .pipeline-col-title.contact { border-color:var(--warning); color:var(--warning); }
+        .pipeline-col-title.proposal { border-color:var(--accent); color:#a07830; }
+        .pipeline-col-title.closed { border-color:var(--success); color:var(--success); }
+        .pipeline-col-title.payment { border-color:#059669; color:#059669; }
+        .deal-card { background:var(--surface); border-radius:9px; padding:12px; margin-bottom:10px; cursor:pointer; transition:all .2s; }
+        .deal-card:hover { background:var(--surface-dark); transform:translateX(3px); }
+        .deal-name { font-size:13px; font-weight:600; margin-bottom:4px; }
+        .deal-value { font-size:12px; color:var(--text-muted); }
+        .deal-tag { display:inline-block; font-size:10px; padding:2px 8px; border-radius:10px; background:rgba(15,41,66,.08); color:var(--primary); margin-top:6px; font-weight:600; }
+
+        /* ── Orders ── */
+        .order-status-bar { display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
+        .order-status-item { background:#fff; border-radius:10px; padding:14px 20px; box-shadow:var(--shadow); text-align:center; flex:1; min-width:120px; }
+        .order-status-num { font-size:28px; font-weight:700; color:var(--primary); }
+        .order-status-label { font-size:11px; color:var(--text-muted); margin-top:2px; }
+
+        /* ── Responsive ── */
+        @media(max-width:1200px) { .stats-grid,.quick-grid { grid-template-columns:repeat(2,1fr); } }
+        @media(max-width:900px) { .sidebar{width:72px;} .logo h1,.logo .sub,.logo .tag,.nav-item span,.nav-badge,.nav-section-title{display:none;} .nav-item{justify-content:center;padding:12px;} .main{margin-left:72px;padding:20px;} }
+        @media(max-width:640px) { .stats-grid,.quick-grid,.form-grid,.report-grid,.pipeline{grid-template-columns:1fr;} .form-group.full{grid-column:span 1;} }
+        /* ── Auth Screen ── */
+        #authScreen { position:fixed; inset:0; background:linear-gradient(135deg,#0a2342 0%,#0f3460 50%,#162447 100%); z-index:9999; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+        .auth-card { background:#fff; border-radius:20px; padding:40px 36px; width:100%; max-width:420px; box-shadow:0 25px 60px rgba(0,0,0,.35); }
+        .auth-logo h1 { font-size:22px; font-weight:700; color:var(--primary); margin:0 0 4px; text-align:center; }
+        .auth-subtitle { font-size:12px; color:var(--text-muted); text-align:center; margin:0 0 24px; }
+        .auth-tabs { display:flex; gap:0; border-bottom:2px solid var(--border); margin-bottom:24px; }
+        .auth-tab { flex:1; text-align:center; padding:10px; font-size:14px; font-weight:600; cursor:pointer; color:var(--text-muted); transition:all .2s; border-bottom:2px solid transparent; margin-bottom:-2px; }
+        .auth-tab.active { color:var(--primary); border-color:var(--primary); }
+        .auth-field { margin-bottom:16px; }
+        .auth-field label { display:block; font-size:12px; font-weight:600; color:var(--primary); margin-bottom:6px; }
+        .auth-field input,.auth-field select { width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:9px; font-size:14px; font-family:inherit; box-sizing:border-box; transition:border-color .2s; }
+        .auth-field input:focus,.auth-field select:focus { outline:none; border-color:var(--primary); }
+        .auth-btn { width:100%; padding:12px; background:var(--primary); color:#fff; border:none; border-radius:9px; font-size:15px; font-weight:700; cursor:pointer; transition:all .2s; margin-top:8px; }
+        .auth-btn:hover { background:var(--primary-dark); transform:translateY(-1px); }
+        .auth-error { background:#fee2e2; color:#dc2626; padding:10px 14px; border-radius:8px; font-size:13px; margin-top:12px; display:none; }
+        .auth-success { background:#dcfce7; color:#16a34a; padding:10px 14px; border-radius:8px; font-size:13px; margin-top:12px; display:none; }
+        .auth-guest { text-align:center; margin-top:20px; }
+        .auth-guest a { color:var(--text-muted); font-size:12px; text-decoration:none; }
+        .auth-guest a:hover { color:var(--primary); }
+
+        /* ── User Badge in Sidebar ── */
+        .user-badge { padding:10px 20px 14px; border-bottom:1px solid rgba(255,255,255,.1); margin-bottom:4px; }
+        .user-name { font-size:13px; font-weight:700; color:#fff; }
+        .user-role { font-size:11px; color:rgba(255,255,255,.5); text-transform:uppercase; letter-spacing:.5px; }
+        .role-admin { color:var(--accent) !important; }
+        .role-manager { color:#6366f1 !important; }
+
+        /* ── Admin Controls ── */
+        .admin-only { display:none !important; }
+        body.is-admin .admin-only { display:flex !important; }
+        body.is-manager .manager-only { display:flex !important; }
+        .admin-only.nav-item { display:none !important; }
+        body.is-admin .admin-only.nav-item { display:flex !important; }
+        .mgmt-section { background:#fff; border-radius:14px; padding:24px; margin-bottom:24px; box-shadow:var(--shadow); }
+        .mgmt-section h3 { font-size:16px; font-weight:700; color:var(--primary); margin:0 0 16px; padding-bottom:10px; border-bottom:2px solid var(--border); }
+        .user-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
+        .user-row:last-child { border-bottom:none; }
+        .user-avatar { width:36px; height:36px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
+        .user-info { flex:1; min-width:0; }
+        .user-info-name { font-size:14px; font-weight:600; }
+        .user-info-meta { font-size:11px; color:var(--text-muted); }
+        .user-status { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+        .user-status.active { background:#dcfce7; color:#16a34a; }
+        .user-status.pending { background:#fef9c3; color:#a16207; }
+        .user-status.inactive { background:#f1f5f9; color:#64748b; }
+
+    </style>
+</head>
+<body>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     AUTH SCREEN
+═══════════════════════════════════════════════════════════ -->
+<div id="authScreen">
+    <div class="auth-card" id="authCard">
+        <div class="auth-logo">
+            <img src="Logo-Long Turn.jpg" alt="Long Turn INC" style="max-width:140px;display:block;margin:0 auto 12px;">
+            <h1>Long Turn INC</h1>
+            <p class="auth-subtitle">PCB 全球业务管理平台</p>
+        </div>
+        <div id="authTabs">
+            <div class="auth-tab active" onclick="switchAuthTab('login')">登录</div>
+            <div class="auth-tab" onclick="switchAuthTab('register')">注册</div>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" onsubmit="return handleLogin(event)">
+            <div class="auth-field">
+                <label>用户名 Username</label>
+                <input type="text" id="loginUsername" placeholder="Enter username" required>
+            </div>
+            <div class="auth-field">
+                <label>密码 Password</label>
+                <input type="password" id="loginPassword" placeholder="Enter password" required>
+            </div>
+            <button type="submit" class="auth-btn">登录 Login</button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="registerForm" style="display:none;" onsubmit="return handleRegister(event)">
+            <div class="auth-field">
+                <label>姓名 Full Name <span class="req">*</span></label>
+                <input type="text" id="regName" placeholder="Your full name" required>
+            </div>
+            <div class="auth-field">
+                <label>用户名 Username <span class="req">*</span></label>
+                <input type="text" id="regUsername" placeholder="Choose a username" required>
+            </div>
+            <div class="auth-field">
+                <label>邮箱 Email</label>
+                <input type="email" id="regEmail" placeholder="your@email.com">
+            </div>
+            <div class="auth-field">
+                <label>职位 / 部门 Role</label>
+                <select id="regRole">
+                    <option value="sales">Sales 销售</option>
+                    <option value="operations">Operations 运营</option>
+                    <option value="finance">Finance 财务</option>
+                    <option value="hr">HR 人事</option>
+                </select>
+            </div>
+            <div class="auth-field">
+                <label>密码 Password <span class="req">*</span></label>
+                <input type="password" id="regPassword" placeholder="Min 6 characters" required>
+            </div>
+            <div class="auth-field">
+                <label>确认密码 Confirm Password <span class="req">*</span></label>
+                <input type="password" id="regPassword2" placeholder="Re-enter password" required>
+            </div>
+            <div class="auth-field" id="regAdminKeyField" style="display:none;">
+                <label>管理员密钥 Admin Key</label>
+                <input type="password" id="regAdminKey" placeholder="Admin key for admin registration">
+            </div>
+            <button type="submit" class="auth-btn">注册 Register</button>
+        </form>
+
+        <div id="authError" class="auth-error"></div>
+        <div id="authSuccess" class="auth-success"></div>
+
+        <div class="auth-guest">
+            <a href="#" onclick="guestLogin(event)">以游客身份浏览 Browse as Guest →</a>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════════════════════════ -->
+<aside class="sidebar">
+    <div class="logo">
+        <img src="Logo-Long Turn.jpg" alt="Long Turn INC">
+        <div class="sub" data-i18n="logo.sub">管理平台</div>
+        <div class="tag">PCB 全球业务拓展</div>
+        <div class="company-info">
+            <div class="ci-item">📍 9244 Prestmont Pl, Suite 308, Frisco, TX 75035, US</div>
+            <div class="ci-item">📞 (214)-449-0909</div>
+            <div class="ci-item">✉️ longturn2025@gmail.com</div>
+        </div>
+    </div>
+
+    <div class="lang-toggle" id="langToggle">
+        <span class="active" onclick="setLang('zh')" data-lang="zh">中文</span>
+        <span onclick="setLang('en')" data-lang="en">EN</span>
+    </div>
+
+    <nav class="nav-section">
+        <div class="nav-section-title" data-i18n="nav.overview">概览</div>
+        <div class="nav-item active" onclick="go('dashboard',this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+            <span data-i18n="menu.dashboard">仪表盘</span>
+        </div>
+    </nav>
+
+    <nav class="nav-section">
+        <div class="nav-section-title" data-i18n="nav.documents">制度文件</div>
+        <div class="nav-item" onclick="go('sop',this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <span data-i18n="menu.sop">SOP 制度库</span>
+            <span class="nav-badge">5</span>
+        </div>
+        <div class="nav-item" onclick="go('weekly',this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span data-i18n="menu.weekly">周会 &amp; 周报</span>
+        </div>
+    </nav>
+
+    <nav class="nav-section">
+        <div class="nav-section-title" data-i18n="nav.admin">行政管理</div>
+        <div class="nav-item" onclick="go('reimbursement',this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            <span data-i18n="menu.reimbursement">出差报销</span>
+        </div>
+        <div class="nav-item" onclick="go('attendance',this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span data-i18n="menu.attendance">考勤管理</span>
+        </div>
+        <div class="nav-item" onclick="go('training',this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            <span data-i18n="menu.training">培训申请</span>
+        </div>
+    </nav>
+
+    <nav class="nav-section">
+        <div class="nav-section-title" data-i18n="nav.business">业务管理</div>
+        <div class="nav-item" onclick="go('sales',this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span data-i18n="menu.sales">销售跟踪</span>
+        </div>
+        <div class="nav-item" onclick="go('salesteam',this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span data-i18n="menu.salesteam">销售团队</span>
+        </div>
+        <div class="nav-item" onclick="go('orders',this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span data-i18n="menu.orders">国际订单</span>
+        </div>
+    </nav>
+</aside>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════════════════════ -->
+<main class="main">
+
+<!-- ─── DASHBOARD ─── -->
+<section class="section active" id="dashboard">
+    <div class="page-header">
+        <div>
+            <h2 data-i18n="menu.dashboard">仪表盘</h2>
+            <p data-i18n="dashboard.subtitle">Long Turn INC · PCB 全球业务管理中心 · 成立于 2025</p>
+        </div>
+        <div class="user-chip">
+            <div class="avatar">LT</div>
+            <div>
+                <div class="user-name">管理员</div>
+                <div class="user-role">系统管理员</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card blue">
+            <div class="stat-top">
+                <div class="stat-icon blue">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <span class="stat-trend up">↑ 12%</span>
+            </div>
+            <div class="stat-value">24</div>
+            <div class="stat-label" data-i18n="dashboard.stats.clients">国际客户总数</div>
+        </div>
+        <div class="stat-card gold">
+            <div class="stat-top">
+                <div class="stat-icon gold">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
+                <span class="stat-trend up">↑ 8%</span>
+            </div>
+            <div class="stat-value">$2.4M</div>
+            <div class="stat-label" data-i18n="dashboard.stats.revenue">本季度营收目标</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-top">
+                <div class="stat-icon green">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                </div>
+                <span class="stat-trend up">↑ 5%</span>
+            </div>
+            <div class="stat-value">18</div>
+            <div class="stat-label" data-i18n="dashboard.stats.orders">进行中订单</div>
+        </div>
+        <div class="stat-card red">
+            <div class="stat-top">
+                <div class="stat-icon red">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
+                <span class="stat-trend neutral">待处理</span>
+            </div>
+            <div class="stat-value">3</div>
+            <div class="stat-label" data-i18n="dashboard.stats.pending">待审批事项</div>
+        </div>
+    </div>
+
+    <div class="quick-grid">
+        <div class="quick-card" onclick="go('reimbursement',null)">
+            <div class="quick-icon">💰</div>
+            <div class="quick-label" data-i18n="dashboard.quick.reimburse">提交报销</div>
+        </div>
+        <div class="quick-card" onclick="go('weekly',null)">
+            <div class="quick-icon">📋</div>
+            <div class="quick-label" data-i18n="dashboard.quick.report">填写周报</div>
+        </div>
+        <div class="quick-card" onclick="go('training',null)">
+            <div class="quick-icon">📚</div>
+            <div class="quick-label" data-i18n="dashboard.quick.training">培训申请</div>
+        </div>
+        <div class="quick-card" onclick="go('orders',null)">
+            <div class="quick-icon">🌍</div>
+            <div class="quick-label" data-i18n="dashboard.quick.orders">国际订单</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title" data-i18n="dashboard.recent">最近动态</div>
+            <div class="card-actions">
+                <select style="padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:12.5px;font-family:inherit;background:#fff;">
+                    <option>全部类型</option><option>报销</option><option>周报</option><option>培训</option>
+                </select>
+            </div>
+        </div>
+        <table>
+            <thead><tr><th>事项</th><th>申请人</th><th>类型</th><th>状态</th><th>日期</th><th>操作</th></tr></thead>
+            <tbody>
+                <tr><td>美国展会差旅报销</td><td>张明</td><td>出差报销</td><td><span class="badge pending">待审批</span></td><td>2025-04-01</td><td><div class="act-btns"><button class="act-btn" title="查看">👁</button><button class="act-btn" title="审批">✅</button></div></td></tr>
+                <tr><td>第13周工作周报</td><td>李华</td><td>周报</td><td><span class="badge approved">已提交</span></td><td>2025-03-31</td><td><div class="act-btns"><button class="act-btn" title="查看">👁</button></div></td></tr>
+                <tr><td>PCB工艺培训申请</td><td>王芳</td><td>培训申请</td><td><span class="badge pending">待审批</span></td><td>2025-03-30</td><td><div class="act-btns"><button class="act-btn" title="查看">👁</button><button class="act-btn" title="审批">✅</button></div></td></tr>
+                <tr><td>纽约客户拜访报销</td><td>陈强</td><td>出差报销</td><td><span class="badge approved">已批准</span></td><td>2025-03-28</td><td><div class="act-btns"><button class="act-btn" title="查看">👁</button></div></td></tr>
+                <tr><td>第12周工作周报</td><td>张明</td><td>周报</td><td><span class="badge approved">已提交</span></td><td>2025-03-24</td><td><div class="act-btns"><button class="act-btn" title="查看">👁</button></div></td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- ─── SOP 制度库 ─── -->
+<section class="section" id="sop">
+    <div class="page-header">
+        <div><h2 data-i18n="menu.sop">SOP 制度库</h2><p data-i18n="sop.subtitle">公司运营政策、标准与程序文件管理</p></div>
+        <button class="btn btn-primary" data-i18n="sop.add">＋ 新增制度</button>
+    </div>
+
+    <div class="sop-grid">
+        <div class="sop-card" onclick="viewPolicy('travel')">
+            <div class="sop-emoji">✈️</div>
+            <h3>出差报销管理制度</h3>
+            <p>Version: 2025-LTI-V1.0 | 生效日期: 2025年9月10日<br>涵盖：差旅申请、机票/租车标准、住宿/餐饮报销、不可报销项目、OA审批流程</p>
+            <div class="sop-footer">
+                <div class="sop-meta">版本 v1.0 · 2025-09-10</div>
+                <span class="badge approved">已生效</span>
+            </div>
+        </div>
+        <div class="sop-card" onclick="viewPolicy('attendance')">
+            <div class="sop-emoji">🕐</div>
+            <h3>考勤管理制度</h3>
+            <p>Version: 2025-LTI-V1.0 | 生效日期: 2025年9月10日<br>涵盖：标准工时、考勤记录、迟到/早退处理、请假流程、远程办公、GPS签到、纪律处分</p>
+            <div class="sop-footer">
+                <div class="sop-meta">版本 v1.0 · 2025-09-10</div>
+                <span class="badge approved">已生效</span>
+            </div>
+        </div>
+        <div class="sop-card" onclick="viewPolicy('remote')">
+            <div class="sop-emoji">📡</div>
+            <h3>远程销售管理与沟通制度</h3>
+            <p>Version: 2025-LTI-V1.0 | 生效日期: 2025年10月1日<br>涵盖：工作时间/时区协调、现场拜访定额、每日汇报、周例会、KPI结构(销售40%+流程30%+协作20%+合规10%)</p>
+            <div class="sop-footer">
+                <div class="sop-meta">版本 v1.0 · 2025-10-01</div>
+                <span class="badge approved">已生效</span>
+            </div>
+        </div>
+        <div class="sop-card" onclick="viewPolicy('sop')">
+            <div class="sop-emoji">📋</div>
+            <h3>运营政策、标准与程序 (SOP)</h3>
+            <p>Version: 2025-LTI-V1.0 | 生效日期: 2025年10月1日<br>涵盖：销售运营流程、RFQ处理、报价审批、样品测试、远程管理沟通、财务政策、KPI考核、总部培训、知识产权保密</p>
+            <div class="sop-footer">
+                <div class="sop-meta">版本 v1.0 · 2025-10-01</div>
+                <span class="badge approved">已生效</span>
+            </div>
+        </div>
+        <div class="sop-card" onclick="viewPolicy('training')">
+            <div class="sop-emoji">🎓</div>
+            <h3>员工外派培训申请与审批表</h3>
+            <p>Version: 2025-LTI-V1.0 | 生效日期: 2025年10月1日<br>包含：培训申请表单模板、费用预算明细、审批流程（运营经理 → 总经理）、培训成果汇报要求</p>
+            <div class="sop-footer">
+                <div class="sop-meta">版本 v1.0 · 2025-10-01</div>
+                <span class="badge approved">已生效</span>
+            </div>
+        </div>
+        <div class="sop-card" style="border:2px dashed var(--border);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;cursor:pointer;" onclick="alert('新增制度功能开发中')">
+            <div style="font-size:40px;margin-bottom:12px;opacity:.4">＋</div>
+            <div style="font-size:14px;color:var(--text-muted);font-weight:600;">添加新制度文件</div>
+        </div>
+    </div>
+
+    <!-- 制度详情弹窗 -->
+    <div class="modal-overlay" id="policyModal" onclick="closeModal(event,'policyModal')">
+        <div class="modal" style="max-width:800px;">
+            <div class="modal-head">
+                <h3 id="policyTitle">制度详情</h3>
+                <button class="modal-close" onclick="document.getElementById('policyModal').classList.remove('open')">✕</button>
+            </div>
+            <div class="modal-body" id="policyContent" style="max-height:60vh;overflow-y:auto;font-size:13px;line-height:1.8;">
+            </div>
+            <div class="modal-foot">
+                <button class="btn btn-outline" onclick="document.getElementById('policyModal').classList.remove('open')">关闭</button>
+                <button class="btn btn-primary" onclick="window.open('/Users/echoyou30/Desktop/Long Turn/Policy- Long Turn INC..pdf')">查看原文件</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ─── 周会 & 周报 ─── -->
+<section class="section" id="weekly">
+    <div class="page-header">
+        <div><h2 data-i18n="menu.weekly">周会 &amp; 周报</h2><p data-i18n="weekly.subtitle">每周工作汇报与会议记录管理</p></div>
+        <button class="btn btn-primary" data-i18n="weekly.submit" onclick="document.getElementById('reportModal').classList.add('open')">＋ 提交本周周报</button>
+    </div>
+
+    <div class="week-nav">
+        <button onclick="changeWeek(-1)">◀</button>
+        <div class="week-label" id="weekLabel">2025 第 14 周（3/31 – 4/6）</div>
+        <button onclick="changeWeek(1)">▶</button>
+    </div>
+
+    <div class="report-grid">
+        <div class="report-block">
+            <h3>📌 本周工作完成情况</h3>
+            <textarea placeholder="请填写本周已完成的主要工作事项..."></textarea>
+        </div>
+        <div class="report-block">
+            <h3>🎯 下周工作计划</h3>
+            <textarea placeholder="请填写下周计划开展的工作..."></textarea>
+        </div>
+        <div class="report-block">
+            <h3>🌍 客户跟进情况</h3>
+            <textarea placeholder="本周跟进的客户名称、沟通进展、下一步行动..."></textarea>
+        </div>
+        <div class="report-block">
+            <h3>⚠️ 问题与需要支持</h3>
+            <textarea placeholder="遇到的困难、需要总部或管理层协助的事项..."></textarea>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:28px;">
+        <div class="card-header">
+            <div class="card-title">历史周报记录</div>
+        </div>
+        <table>
+            <thead><tr><th>周次</th><th>提交人</th><th>提交时间</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+                <tr><td>2025 第 13 周</td><td>李华</td><td>2025-03-31 09:15</td><td><span class="badge approved">已提交</span></td><td><div class="act-btns"><button class="act-btn">👁</button></div></td></tr>
+                <tr><td>2025 第 12 周</td><td>张明</td><td>2025-03-24 10:02</td><td><span class="badge approved">已提交</span></td><td><div class="act-btns"><button class="act-btn">👁</button></div></td></tr>
+                <tr><td>2025 第 11 周</td><td>王芳</td><td>2025-03-17 08:55</td><td><span class="badge approved">已提交</span></td><td><div class="act-btns"><button class="act-btn">👁</button></div></td></tr>
+                <tr><td>2025 第 10 周</td><td>陈强</td><td>2025-03-10 09:30</td><td><span class="badge draft">草稿</span></td><td><div class="act-btns"><button class="act-btn">✏️</button></div></td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- ─── 出差报销 ─── -->
+<section class="section" id="reimbursement">
+    <div class="page-header">
+        <div><h2 data-i18n="menu.reimbursement">出差报销</h2><p data-i18n="reimbursement.subtitle">差旅费用申请与审批管理</p></div>
+        <div style="display:flex;gap:10px;">
+            <button class="btn btn-outline" onclick="exportReimbursements()">📥 Export</button>
+            <button class="btn btn-primary" data-i18n="reimbursement.new" onclick="openReimburseModal()">＋ 新建报销申请</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">报销申请列表</div>
+            <div class="card-actions">
+                <select style="padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:12.5px;font-family:inherit;background:#fff;" onchange="filterReimbursements(this.value)">
+                    <option value="">全部状态</option><option value="pending">待审批</option><option value="approved">已批准</option><option value="rejected">已驳回</option>
+                </select>
+            </div>
+        </div>
+        <table>
+            <thead><tr><th>申请编号</th><th>出差目的</th><th>申请人</th><th>金额</th><th>出差日期</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="reimbTableBody">
+                <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted);">暂无报销记录，点击 <strong>＋ 新建报销申请</strong> 添加</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- ─── 考勤管理 ─── -->
+<section class="section" id="attendance">
+    <div class="page-header">
+        <div><h2 data-i18n="menu.attendance">考勤管理</h2><p data-i18n="attendance.subtitle">员工出勤记录与假期管理</p></div>
+        <button class="btn btn-primary" data-i18n="attendance.apply" onclick="document.getElementById('attendanceModal').classList.add('open')">申请请假</button>
+    </div>
+
+    <div class="stats-grid" style="margin-bottom:28px;">
+        <div class="stat-card green"><div class="stat-top"><div class="stat-icon green">✅</div></div><div class="stat-value">22</div><div class="stat-label">本月出勤天数</div></div>
+        <div class="stat-card gold"><div class="stat-top"><div class="stat-icon gold">🏖</div></div><div class="stat-value">3</div><div class="stat-label">剩余年假（天）</div></div>
+        <div class="stat-card blue"><div class="stat-top"><div class="stat-icon blue">⏰</div></div><div class="stat-value">8h</div><div class="stat-label">今日工时</div></div>
+        <div class="stat-card red"><div class="stat-top"><div class="stat-icon red">⚠️</div></div><div class="stat-value">0</div><div class="stat-label">本月迟到次数</div></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><div class="card-title">本月考勤日历 — 2025年4月</div></div>
+        <div style="padding:20px;">
+            <div class="attendance-grid">
+                <div class="att-day"><div class="day-name">周一</div><div class="day-num">31</div><div class="att-dot present"></div></div>
+                <div class="att-day"><div class="day-name">周二</div><div class="day-num">1</div><div class="att-dot today"></div></div>
+                <div class="att-day"><div class="day-name">周三</div><div class="day-num">2</div><div class="att-dot" style="background:#ddd;"></div></div>
+                <div class="att-day"><div class="day-name">周四</div><div class="day-num">3</div><div class="att-dot" style="background:#ddd;"></div></div>
+                <div class="att-day"><div class="day-name">周五</div><div class="day-num">4</div><div class="att-dot" style="background:#ddd;"></div></div>
+                <div class="att-day" style="opacity:.4"><div class="day-name">周六</div><div class="day-num">5</div></div>
+                <div class="att-day" style="opacity:.4"><div class="day-name">周日</div><div class="day-num">6</div></div>
+            </div>
+            <div style="display:flex;gap:20px;margin-top:16px;font-size:12px;color:var(--text-muted);">
+                <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--success);margin-right:5px;"></span>正常出勤</span>
+                <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--accent);margin-right:5px;"></span>今天</span>
+                <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--warning);margin-right:5px;"></span>请假</span>
+                <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--danger);margin-right:5px;"></span>缺勤</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:24px;">
+        <div class="card-header">
+            <div class="card-title">请假记录</div>
+            <div class="card-actions"><button class="btn btn-outline btn-sm" onclick="exportLeave()">📥 Export</button></div>
+        </div>
+        <table>
+            <thead><tr><th>申请人</th><th>请假类型</th><th>开始日期</th><th>结束日期</th><th>天数</th><th>原因</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="leaveTableBody">
+                <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">暂无请假记录</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- ─── 培训申请 ─── -->
+<section class="section" id="training">
+    <div class="page-header">
+        <div><h2 data-i18n="training.title">员工外派培训申请</h2><p data-i18n="training.subtitle">培训申请、审批及成果管理</p></div>
+        <div style="display:flex;gap:10px;">
+            <button class="btn btn-outline" onclick="exportTraining()">📥 Export</button>
+            <button class="btn btn-primary" data-i18n="training.new" onclick="openTrainingModal()">＋ 新建培训申请</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">培训申请记录</div>
+            <div class="card-actions">
+                <select style="padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:12.5px;font-family:inherit;background:#fff;" onchange="filterTraining(this.value)">
+                    <option value="">全部状态</option><option value="pending">待审批</option><option value="approved">已批准</option><option value="completed">已完成</option><option value="rejected">已驳回</option>
+                </select>
+            </div>
+        </div>
+        <table>
+            <thead><tr><th>申请编号</th><th>培训名称</th><th>申请人</th><th>培训机构</th><th>费用</th><th>日期</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="trainingTableBody">
+                <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">暂无培训记录，点击 <strong>＋ 新建培训申请</strong> 添加</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- ─── 销售跟踪 ─── -->
+<section class="section" id="sales">
+    <div class="page-header">
+        <div><h2 data-i18n="sales.title">Sales Tracking</h2><p data-i18n="sales.subtitle">Customer Development & Sales Pipeline</p></div>
+        <button class="btn btn-primary" onclick="openCustomerModal()">＋ Add Customer</button>
+    </div>
+
+    <div class="pipeline">
+        <div class="pipeline-col">
+            <div class="pipeline-col-title lead">🔍 Lead Generation</div>
+            <div id="pipeline-lead" style="min-height:60px;">
+                <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">No leads yet</div>
+            </div>
+        </div>
+        <div class="pipeline-col">
+            <div class="pipeline-col-title contact">📞 Initial Contact</div>
+            <div id="pipeline-contact" style="min-height:60px;">
+                <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">No contacts yet</div>
+            </div>
+        </div>
+        <div class="pipeline-col">
+            <div class="pipeline-col-title proposal">📄 Proposal Sent</div>
+            <div id="pipeline-proposal" style="min-height:60px;">
+                <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">No proposals yet</div>
+            </div>
+        </div>
+        <div class="pipeline-col">
+            <div class="pipeline-col-title closed">✅ Closed Won</div>
+            <div id="pipeline-closed" style="min-height:60px;">
+                <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">No closed deals yet</div>
+            </div>
+        </div>
+        <div class="pipeline-col">
+            <div class="pipeline-col-title payment">💳 Payment Done</div>
+            <div id="pipeline-payment" style="min-height:60px;">
+                <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">No paid deals yet</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Customer Records</div>
+            <div class="card-actions">
+                <button class="btn btn-outline btn-sm" onclick="exportCustomers()">Export</button>
+            </div>
+        </div>
+        <div style="overflow-x:auto;">
+        <table style="min-width:900px;">
+            <thead><tr><th>Company</th><th>Contact</th><th>Location</th><th>Type</th><th>PCB Needs</th><th>Est. Value</th><th>Stage</th><th>First Contact</th><th>Follow-up</th><th>Sales Rep</th><th style="width:100px;white-space:nowrap;">Actions</th></tr></thead>
+            <tbody id="customerTableBody">
+                <tr><td colspan="12" style="text-align:center;padding:32px;color:var(--text-muted);">No customers yet. Click <strong>+ Add Customer</strong> to get started.</td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+</section>
+
+<!-- Add Customer Modal -->
+<div class="modal-overlay" id="addCustomerModal" onclick="closeModal(event,'addCustomerModal')">
+    <div class="modal" style="max-width:640px;">
+        <div class="modal-head">
+            <h3>➕ Add New Customer</h3>
+            <button class="modal-close" onclick="document.getElementById('addCustomerModal').classList.remove('open')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid">
+                <div class="form-group"><label class="form-label">Company Name <span class="req">*</span></label><input class="form-input" id="c_company" type="text" placeholder="e.g. Silicon Valley PCB"></div>
+                <div class="form-group"><label class="form-label">Contact Person <span class="req">*</span></label><input class="form-input" id="c_contact" type="text" placeholder="Full name"></div>
+                <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="c_email" type="email" placeholder="contact@company.com"></div>
+                <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="c_phone" type="text" placeholder="+1 (xxx) xxx-xxxx"></div>
+                <div class="form-group"><label class="form-label">City</label><input class="form-input" id="c_city" type="text" placeholder="e.g. San Francisco"></div>
+                <div class="form-group"><label class="form-label">State <span class="req">*</span></label>
+                    <select class="form-input" id="c_state">
+                        <option value="">Select state...</option>
+                        <option>California</option><option>Texas</option><option>New York</option><option>Florida</option>
+                        <option>Illinois</option><option>Washington</option><option>Massachusetts</option><option>Georgia</option>
+                        <option>Arizona</option><option>Colorado</option><option>Michigan</option><option>Ohio</option><option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group"><label class="form-label">Assigned Sales Rep</label>
+                    <select class="form-input" id="c_salesRep">
+                        <option value="">-- Unassigned --</option>
+                    </select>
+                </div>
+                <div class="form-group"><label class="form-label">Customer Type</label>
+                    <select class="form-input" id="c_type">
+                        <option>Enterprise</option><option>Mid-Market</option><option>SMB</option>
+                    </select>
+                </div>
+                <div class="form-group"><label class="form-label">PCB Requirements</label><input class="form-input" id="c_pcb" type="text" placeholder="e.g. HDI, 6-layer, FR4"></div>
+                <div class="form-group"><label class="form-label">Estimated Value ($)</label><input class="form-input" id="c_value" type="number" placeholder="0"></div>
+                <div class="form-group"><label class="form-label">First Contact Date</label><input class="form-input" id="c_firstContact" type="date"></div>
+                <div class="form-group"><label class="form-label">Follow-up Date</label><input class="form-input" id="c_followup" type="date"></div>
+                <div class="form-group full"><label class="form-label">Pipeline Stage</label>
+                    <select class="form-input" id="c_stage">
+                        <option value="lead">🔍 Lead Generation</option>
+                        <option value="contact">📞 Initial Contact</option>
+                        <option value="proposal">📄 Proposal Sent</option>
+                        <option value="closed">✅ Closed Won</option>
+                        <option value="payment">💳 Payment Done</option>
+                    </select>
+                </div>
+                <div class="form-group full"><label class="form-label">Notes</label><textarea class="form-input" id="c_notes" placeholder="Any additional notes about this customer..."></textarea></div>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-outline" onclick="document.getElementById('addCustomerModal').classList.remove('open')">Cancel</button>
+            <button class="btn btn-primary" onclick="addCustomer()">Add Customer</button>
+        </div>
+    </div>
+</div>
+
+<!-- ─── 销售团队 ─── -->
+<section class="section" id="salesteam">
+    <div class="page-header">
+        <div><h2 data-i18n="menu.salesteam">销售团队</h2><p>Manage sales team members and their assigned accounts</p></div>
+        <button class="btn btn-primary" onclick="document.getElementById('addMemberModal').classList.add('open')">＋ Add Member</button>
+    </div>
+
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:28px;">
+        <div class="stat-card blue"><div class="stat-top"><div class="stat-icon blue">👥</div></div><div class="stat-value" id="teamTotal">0</div><div class="stat-label">Total Members</div></div>
+        <div class="stat-card green"><div class="stat-top"><div class="stat-icon green">🏢</div></div><div class="stat-value" id="teamAccounts">0</div><div class="stat-label">Assigned Accounts</div></div>
+        <div class="stat-card gold"><div class="stat-top"><div class="stat-icon gold">🌍</div></div><div class="stat-value" id="teamRegions">0</div><div class="stat-label">Regions Covered</div></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Team Members</div>
+            <div class="card-actions">
+                <button class="btn btn-outline btn-sm" onclick="exportTeam()">Export</button>
+            </div>
+        </div>
+        <table>
+            <thead><tr><th>Name</th><th>Title</th><th>Region</th><th>Territory</th><th>Assigned Customers</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+            <tbody id="teamTableBody">
+                <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">No team members yet. Click <strong>+ Add Member</strong> to get started.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Add Member Modal -->
+<div class="modal-overlay" id="addMemberModal" onclick="closeModal(event,'addMemberModal')">
+    <div class="modal" style="max-width:640px;">
+        <div class="modal-head">
+            <h3>👤 Add Sales Team Member</h3>
+            <button class="modal-close" onclick="document.getElementById('addMemberModal').classList.remove('open');resetMemberModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid">
+                <div class="form-group"><label class="form-label">Full Name <span class="req">*</span></label><input class="form-input" id="m_name" type="text" placeholder="e.g. Jack Tian"></div>
+                <div class="form-group"><label class="form-label">Title</label><input class="form-input" id="m_title" type="text" placeholder="e.g. Sales Representative"></div>
+                <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="m_email" type="email" placeholder="work@longturn.com"></div>
+                <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="m_phone" type="text" placeholder="+1 (xxx) xxx-xxxx"></div>
+                <div class="form-group"><label class="form-label">Region</label>
+                    <select class="form-input" id="m_region">
+                        <option value="">Select region...</option>
+                        <option>California</option><option>Texas</option><option>East Coast</option><option>Midwest</option><option>Southwest</option><option>Pacific Northwest</option>
+                    </select>
+                </div>
+                <div class="form-group"><label class="form-label">Territory / State(s)</label><input class="form-input" id="m_territory" type="text" placeholder="e.g. Southern California, Silicon Valley"></div>
+                <div class="form-group"><label class="form-label">Working Location</label>
+                    <select class="form-input" id="m_location">
+                        <option>Remote (CA)</option><option>Office (TX)</option><option>Hybrid</option><option>Field Based</option>
+                    </select>
+                </div>
+                <div class="form-group"><label class="form-label">Role</label>
+                    <select class="form-input" id="m_role">
+                        <option>Sales Representative</option><option>Senior Sales</option><option>Sales Manager</option><option>Account Executive</option>
+                    </select>
+                </div>
+                <div class="form-group full"><label class="form-label">Assigned Customer IDs <span style="font-weight:400;color:var(--text-muted)">(comma-separated, e.g. 123456,789012)</span></label><input class="form-input" id="m_customers" type="text" placeholder="Leave blank if no customers assigned yet"></div>
+                <div class="form-group full"><label class="form-label">Notes</label><textarea class="form-input" id="m_notes" placeholder="Any additional notes..."></textarea></div>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-outline" onclick="document.getElementById('addMemberModal').classList.remove('open');resetMemberModal()">Cancel</button>
+            <button class="btn btn-primary" id="memberSubmitBtn" onclick="addMember()">Add Member</button>
+        </div>
+    </div>
+</div>
+
+<!-- ─── 国际订单 ─── -->
+<section class="section" id="orders">
+    <div class="page-header">
+        <div><h2 data-i18n="orders.title">国际订单管理</h2><p data-i18n="orders.subtitle">PCB 全球订单跟踪与状态管理</p></div>
+        <div style="display:flex;gap:10px;">
+            <button class="btn btn-outline" onclick="exportOrders()">📥 Export</button>
+            <button class="btn btn-primary" data-i18n="orders.new" onclick="openOrderModal()">＋ 新建订单</button>
+        </div>
+    </div>
+
+    <div class="order-status-bar">
+        <div class="order-status-item"><div class="order-status-num" style="color:var(--warning)" id="orders-pending">0</div><div class="order-status-label">待确认</div></div>
+        <div class="order-status-item"><div class="order-status-num" style="color:var(--primary)" id="orders-production">0</div><div class="order-status-label">生产中</div></div>
+        <div class="order-status-item"><div class="order-status-num" style="color:#6366f1" id="orders-qc">0</div><div class="order-status-label">质检中</div></div>
+        <div class="order-status-item"><div class="order-status-num" style="color:var(--accent)" id="orders-shipping">0</div><div class="order-status-label">运输中</div></div>
+        <div class="order-status-item"><div class="order-status-num" style="color:var(--success)" id="orders-done">0</div><div class="order-status-label">已完成</div></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">订单列表</div>
+            <div class="card-actions">
+                <select style="padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:12.5px;font-family:inherit;background:#fff;" onchange="filterOrders(this.value)">
+                    <option value="">全部状态</option><option value="pending">待确认</option><option value="production">生产中</option><option value="qc">质检中</option><option value="shipping">运输中</option><option value="completed">已完成</option>
+                </select>
+            </div>
+        </div>
+        <table>
+            <thead><tr><th>订单号</th><th>客户名称</th><th>产品规格</th><th>数量</th><th>金额</th><th>交货期</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="ordersTableBody">
+                <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">暂无订单，点击 <strong>＋ 新建订单</strong> 添加</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════════════════════ -->
+
+<!-- 报销申请 Modal -->
+<div class="modal-overlay" id="reimburseModal" onclick="closeModal(event,'reimburseModal')">
+    <div class="modal">
+        <div class="modal-head">
+            <h3>💰 New Reimbursement</h3>
+            <button class="modal-close" onclick="document.getElementById('reimburseModal').classList.remove('open')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid">
+                <div class="form-group"><label class="form-label">申请人 Applicant <span class="req">*</span></label><input class="form-input" id="r_applicant" type="text" placeholder="Name"></div>
+                <div class="form-group"><label class="form-label">出差目的 Purpose <span class="req">*</span></label><input class="form-input" id="r_purpose" type="text" placeholder="e.g. Client visit, trade show"></div>
+                <div class="form-group"><label class="form-label">出发日期 Start Date</label><input class="form-input" id="r_start" type="date"></div>
+                <div class="form-group"><label class="form-label">返回日期 End Date</label><input class="form-input" id="r_end" type="date"></div>
+                <div class="form-group"><label class="form-label">交通费 ($)</label><input class="form-input" id="r_transport" type="number" placeholder="0.00"></div>
+                <div class="form-group"><label class="form-label">住宿费 ($)</label><input class="form-input" id="r_hotel" type="number" placeholder="0.00"></div>
+                <div class="form-group"><label class="form-label">餐饮费 ($)</label><input class="form-input" id="r_meal" type="number" placeholder="0.00"></div>
+                <div class="form-group"><label class="form-label">其他费用 ($)</label><input class="form-input" id="r_other" type="number" placeholder="0.00"></div>
+                <div class="form-group full"><label class="form-label">备注 Notes</label><textarea class="form-input" id="r_notes" placeholder="Additional details..."></textarea></div>
+                <div class="form-group full" id="r_statusGroup" style="display:none;"><label class="form-label">状态 Status</label>
+                    <select class="form-input" id="r_status">
+                        <option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-outline" onclick="document.getElementById('reimburseModal').classList.remove('open')">Cancel</button>
+            <button class="btn btn-primary" id="reimburseSubmitBtn" onclick="submitReimbursement()">Submit</button>
+        </div>
+    </div>
+</div>
+
+<!-- 周报 Modal -->
+<div class="modal-overlay" id="reportModal" onclick="closeModal(event,'reportModal')">
+    <div class="modal">
+        <div class="modal-head">
+            <h3>📋 Submit Weekly Report</h3>
+            <button class="modal-close" onclick="document.getElementById('reportModal').classList.remove('open')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid">
+                <div class="form-group"><label class="form-label">姓名 Name <span class="req">*</span></label><input class="form-input" id="rep_name" type="text" placeholder="Your name"></div>
+                <div class="form-group"><label class="form-label">周次 Week</label><input class="form-input" id="rep_week" type="text" value="Week 14, 2025" readonly></div>
+                <div class="form-group full"><label class="form-label">本周完成工作 Work Completed <span class="req">*</span></label><textarea class="form-input" id="rep_done" placeholder="Describe completed tasks..."></textarea></div>
+                <div class="form-group full"><label class="form-label">下周工作计划 Next Week Plan <span class="req">*</span></label><textarea class="form-input" id="rep_next" placeholder="Planned tasks for next week..."></textarea></div>
+                <div class="form-group full"><label class="form-label">客户跟进 Customer Follow-up</label><textarea class="form-input" id="rep_customers" placeholder="Customers contacted and progress..."></textarea></div>
+                <div class="form-group full"><label class="form-label">问题与需要支持 Issues & Support Needed</label><textarea class="form-input" id="rep_issues" placeholder="Challenges or support needed..."></textarea></div>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-outline" onclick="document.getElementById('reportModal').classList.remove('open')">Cancel</button>
+            <button class="btn btn-primary" onclick="submitWeeklyReport()">Submit Report</button>
+        </div>
+    </div>
+</div>
+
+<!-- 培训申请 Modal -->
+<div class="modal-overlay" id="trainingModal" onclick="closeModal(event,'trainingModal')">
+    <div class="modal">
+        <div class="modal-head">
+            <h3>🎓 New Training Application</h3>
+            <button class="modal-close" onclick="document.getElementById('trainingModal').classList.remove('open')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid">
+                <div class="form-group"><label class="form-label">申请人 Applicant <span class="req">*</span></label><input class="form-input" id="t_name" type="text" placeholder="Full name"></div>
+                <div class="form-group"><label class="form-label">培训名称 Program <span class="req">*</span></label><input class="form-input" id="t_program" type="text" placeholder="Training program name"></div>
+                <div class="form-group"><label class="form-label">培训机构 Agency</label><input class="form-input" id="t_agency" type="text" placeholder="Hosting organization"></div>
+                <div class="form-group"><label class="form-label">培训地点 Location</label><input class="form-input" id="t_location" type="text" placeholder="City / Online"></div>
+                <div class="form-group"><label class="form-label">培训日期 Date</label><input class="form-input" id="t_date" type="date"></div>
+                <div class="form-group"><label class="form-label">培训费用 ($)</label><input class="form-input" id="t_fee" type="number" placeholder="0.00"></div>
+                <div class="form-group full"><label class="form-label">申请理由 Reason <span class="req">*</span></label><textarea class="form-input" id="t_reason" placeholder="Why is this training valuable?"></textarea></div>
+                <div class="form-group full"><label class="form-label">预期成果 Expected Outcome</label><textarea class="form-input" id="t_result" placeholder="What will this training achieve?"></textarea></div>
+                <div class="form-group full" id="t_statusGroup" style="display:none;"><label class="form-label">状态 Status</label>
+                    <select class="form-input" id="t_status">
+                        <option value="pending">Pending</option><option value="approved">Approved</option><option value="completed">Completed</option><option value="rejected">Rejected</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-outline" onclick="document.getElementById('trainingModal').classList.remove('open')">Cancel</button>
+            <button class="btn btn-primary" id="trainingSubmitBtn" onclick="submitTraining()">Submit</button>
+        </div>
+    </div>
+</div>
+
+<!-- 订单 Modal -->
+<div class="modal-overlay" id="orderModal" onclick="closeModal(event,'orderModal')">
+    <div class="modal">
+        <div class="modal-head">
+            <h3>🌍 New Order</h3>
+            <button class="modal-close" onclick="document.getElementById('orderModal').classList.remove('open')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid">
+                <div class="form-group"><label class="form-label">客户名称 Customer <span class="req">*</span></label><input class="form-input" id="o_customer" type="text" placeholder="Customer company name"></div>
+                <div class="form-group"><label class="form-label">产品规格 Specs</label><input class="form-input" id="o_spec" type="text" placeholder="e.g. 6-layer HDI PCB"></div>
+                <div class="form-group"><label class="form-label">数量 Qty</label><input class="form-input" id="o_qty" type="text" placeholder="e.g. 5,000 pcs"></div>
+                <div class="form-group"><label class="form-label">金额 ($)</label><input class="form-input" id="o_amount" type="number" placeholder="0"></div>
+                <div class="form-group"><label class="form-label">交货期 Delivery</label><input class="form-input" id="o_delivery" type="date"></div>
+                <div class="form-group"><label class="form-label">状态 Status</label>
+                    <select class="form-input" id="o_status">
+                        <option value="pending">Pending</option><option value="production">In Production</option><option value="qc">QC</option><option value="shipping">Shipping</option><option value="completed">Completed</option>
+                    </select>
+                </div>
+                <div class="form-group full"><label class="form-label">备注 Notes</label><textarea class="form-input" id="o_notes" placeholder="Additional notes..."></textarea></div>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-outline" onclick="document.getElementById('orderModal').classList.remove('open')">Cancel</button>
+            <button class="btn btn-primary" id="orderSubmitBtn" onclick="submitOrder()">Create Order</button>
+        </div>
+    </div>
+</div>
+
+<!-- 请假 Modal -->
+<div class="modal-overlay" id="attendanceModal" onclick="closeModal(event,'attendanceModal')">
+    <div class="modal">
+        <div class="modal-head">
+            <h3>🏖️ Leave Request</h3>
+            <button class="modal-close" onclick="document.getElementById('attendanceModal').classList.remove('open')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid">
+                <div class="form-group"><label class="form-label">姓名 Name <span class="req">*</span></label><input class="form-input" id="lv_name" type="text" placeholder="Your name"></div>
+                <div class="form-group"><label class="form-label">请假类型 Type</label>
+                    <select class="form-input" id="lv_type">
+                        <option value="vacation">年假 Vacation</option><option value="sick">病假 Sick Leave</option><option value="personal">事假 Personal Leave</option>
+                    </select>
+                </div>
+                <div class="form-group"><label class="form-label">开始日期 Start <span class="req">*</span></label><input class="form-input" id="lv_start" type="date"></div>
+                <div class="form-group"><label class="form-label">结束日期 End <span class="req">*</span></label><input class="form-input" id="lv_end" type="date"></div>
+                <div class="form-group full"><label class="form-label">请假原因 Reason</label><textarea class="form-input" id="lv_reason" placeholder="Reason for leave..."></textarea></div>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-outline" onclick="document.getElementById('attendanceModal').classList.remove('open')">Cancel</button>
+            <button class="btn btn-primary" onclick="submitLeave()">Submit</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Navigation
+    function go(sectionId, navEl) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(sectionId).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        if (navEl) {
+            navEl.classList.add('active');
+        } else {
+            document.querySelectorAll('.nav-item').forEach(n => {
+                if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+sectionId+"'")) {
+                    n.classList.add('active');
+                }
+            });
+        }
+    }
+
+    // 制度详情
+    const policies = {
+        travel: {
+            title: '✈️ 出差报销管理制度 (Travel & Expense Policy)',
+            content: `<h4 style="margin:0 0 12px;color:var(--primary);">Version: 2025-LTI-V1.0 | 生效日期: 2025年9月10日</h4>
+<h5 style="margin:16px 0 8px;">I. 一般原则</h5>
+<ul><li><strong>合规性:</strong> 根据IRS法规及湖北龙腾母公司财务指南</li><li><strong>诚信原则:</strong> 员工必须诚实、节约、负责</li><li><strong>最终审批:</strong> 总经理(Fei Wu)拥有最终决定权</li></ul>
+<h5 style="margin:16px 0 8px;">II. 差旅申请与预订</h5>
+<ul><li>州际出差需提前7个工作日提交书面申请</li><li><strong>机票:</strong> 经济舱为标准；6小时以上航班需总经理批准才能升舱</li><li><strong>租车:</strong> 推荐中型车；必须购买商业保险(LDW/CDW)</li></ul>
+<h5 style="margin:16px 0 8px;">III. 报销标准</h5>
+<ul><li><strong>住宿:</strong> $250-$350/晚（一线城市如旧金山/洛杉矶上限更高）</li><li><strong>餐饮:</strong> 实际支出上限$75/天；商务餐需列出参与者、公司及讨论主题</li><li><strong>私车:</strong> 按IRS标准里程费率(如2024年$0.67/英里)，需Google Maps截图</li><li><strong>网约车:</strong> Uber/Lyft/出租车可报销，小费10%-15%</li></ul>
+<h5 style="margin:16px 0 8px;">IV. 报告与文档</h5>
+<ul><li>费用报告必须在出差结束后10个工作日内提交</li><li>单笔$25以上必须提供原始收据</li><li>电子收据需转换为PDF格式</li><li><strong>审批流程:</strong> 员工提交 → 部门经理 → 行政/财务 → 总经理 → 付款</li></ul>
+<h5 style="margin:16px 0 8px;">V. 不可报销项目</h5>
+<ul><li>个人娱乐（如电影、按摩、旅游景点）</li><li>随行家属的额外费用</li><li>交通违规或停车罚款</li><li>烟草和奢侈品</li></ul>`
+        },
+        attendance: {
+            title: '🕐 考勤管理制度 (Attendance & Punctuality Policy)',
+            content: `<h4 style="margin:0 0 12px;color:var(--primary);">Version: 2025-LTI-V1.0 | 生效日期: 2025年9月10日</h4>
+<h5 style="margin:16px 0 8px;">I. 工作时间</h5>
+<ul><li>标准工时: 40小时/周</li><li>核心工作时间: 周一至周五 9:00 AM - 6:00 PM（含1小时无薪午餐）</li><li>销售和技术支持部门可调整工作时间</li></ul>
+<h5 style="margin:16px 0 8px;">II. 考勤记录</h5>
+<ul><li>非豁免员工: 必须准确记录每日上下班及午餐时间</li><li>豁免/管理人员: 无需每日打卡，但需记录请假</li><li><strong>禁止代打卡:</strong> 违规将视为严重违纪</li></ul>
+<h5 style="margin:16px 0 8px;">III. 迟到与早退</h5>
+<ul><li>必须在9:00 AM前通知部门主管或总经理</li><li>未经批准提前离开禁止</li></ul>
+<h5 style="margin:16px 0 8px;">IV. 请假流程</h5>
+<ul><li><strong>事假:</strong> 提前3个工作日申请，需总经理批准</li><li><strong>病假:</strong> 必须在9:00 AM前通知；超过3天需提供医生证明</li><li><strong>法定节假日:</strong> 遵循美国联邦节假日</li></ul>
+<h5 style="margin:16px 0 8px;">V. 远程办公与外勤</h5>
+<ul><li>远程办公需总经理(Fei Wu)逐案批准</li><li>远程员工在总部核心工作时间需保持可联系状态</li><li><strong>销售GPS签到(强制):</strong> 到达客户现场15分钟内必须GPS定位签到</li></ul>
+<h5 style="margin:16px 0 8px;">VI. 纪律处分</h5>
+<ul><li>1个月内3次无故迟到/早退 → 口头警告</li><li>口头警告后继续违规或无故缺勤1天 → 书面警告</li><li>连续无故缺勤3天以上或伪造GPS数据 → 解雇</li></ul>`
+        },
+        remote: {
+            title: '📡 Remote Sales Management & Communication Policy',
+            content: `<h4 style="margin:0 0 12px;color:var(--primary);">Version: 2025-LTI-V1.0 | 生效日期: 2025年10月1日</h4>
+<h5 style="margin:16px 0 8px;">I. 工作时间与时区协调</h5>
+<ul><li>远程销售人员遵循太平洋时间 (PT) 9:00 AM - 6:00 PM</li><li><strong>核心协作窗口:</strong> 10:00 AM - 4:00 PM 中部时间 (CT) 必须在线响应</li><li>必要时需参加晚上国际视频会议</li></ul>
+<h5 style="margin:16px 0 8px;">II. 现场活动与监控</h5>
+<ul><li><strong>现场拜访定额:</strong> 每周3-5次有效客户现场拜访</li><li>远程办公需保持专业环境（干净背景、稳定网络）</li></ul>
+<h5 style="margin:16px 0 8px;">III. 汇报与审批流程</h5>
+<ul><li><strong>每日更新:</strong> 通过OA系统提交简短每日汇报</li><li><strong>周例会:</strong> 每周五下午3:00 CT参加由总经理主持的周会</li><li><strong>重大项目:</strong> 订单金额超过$10,000需总经理电子签批</li></ul>
+<h5 style="margin:16px 0 8px;">IV. 资产与信息安全</h5>
+<ul><li>公司笔记本电脑和PCB样品套件仅限业务使用</li><li>禁止向第三方披露非公开技术参数</li><li>远程办公必须使用加密频道访问总部服务器</li></ul>
+<h5 style="margin:16px 0 8px;">V. 跨州管理与差旅</h5>
+<ul><li>可能需要每季度或半年到德州总部述职</li><li>遵守加州劳动法（休息时间、工具报销等）</li></ul>
+<h5 style="margin:16px 0 8px;">VI. 远程销售KPI结构</h5>
+<ul><li><strong>40% 销售业绩:</strong> 实际销量和毛利润</li><li><strong>30% 流程指标:</strong> 客户拜访次数、RFQ响应速度、展会参加频率</li><li><strong>20% 团队协作:</strong> 与德州总部和中国工厂沟通的准确性和及时性</li><li><strong>10% 行政合规:</strong> 报销文档准确性和考勤记录完整性</li></ul>`
+        },
+        sop: {
+            title: '📋 运营政策、标准与程序 (SOP)',
+            content: `<h4 style="margin:0 0 12px;color:var(--primary);">Version: 2025-LTI-V1.0 | 生效日期: 2025年10月1日</h4>
+<h5 style="margin:16px 0 8px;">第一部分: 销售运营SOP</h5>
+<ul><li><strong>线索生成与跟进:</strong> 通过展会、LinkedIn或推荐获得的线索必须在24小时内响应</li><li><strong>询价处理(RFQ):</strong> 简单报价48小时内完成；复杂多层板3-5个工作日</li><li><strong>报价审批:</strong> 毛利率低于公司标准需总经理签批</li><li><strong>样品与订单:</strong> 大货订单前必须进行样品测试(A/B Testing)</li></ul>
+<h5 style="margin:16px 0 8px;">第二部分: 远程与跨州管理政策</h5>
+<ul><li><strong>响应时效:</strong> 核心重叠窗口10:00 AM - 4:00 CT内30分钟内响应总经理指令</li><li><strong>周例会:</strong> 每周五下午3:00 CT全员视频会议</li></ul>
+<h5 style="margin:16px 0 8px;">第三部分: 财务与费用政策</h5>
+<ul><li><strong>差旅审批:</strong> $500以上差旅需提前3天提交申请</li><li><strong>商务餐:</strong> 必须注明参与者和讨论的业务主题</li><li><strong>应收账款:</strong> 新客户一般使用CIA或部分预付款；长期客户信用条款需总经理批准</li></ul>
+<h5 style="margin:16px 0 8px;">第四部分: 人员与培训SOP</h5>
+<ul><li><strong>KPI考核:</strong> 销量40% | 新客户30% | OA系统合规20% | 行政合规10%</li><li><strong>总部培训:</strong> 核心销售人员每年至少30天到湖北/珠海/深圳工厂全职培训</li></ul>
+<h5 style="margin:16px 0 8px;">第五部分: 知识产权与保密</h5>
+<ul><li><strong>数据分类:</strong> 客户Gerber文件、母公司定价模型、工厂生产参数为最高机密</li><li><strong>设备控制:</strong> 禁止使用个人电脑处理客户技术图纸</li><li><strong>离职交接:</strong> 离职时必须立即归还公司电脑和样品套件</li></ul>`
+        },
+        training: {
+            title: '🎓 员工外派培训申请与审批表',
+            content: `<h4 style="margin:0 0 12px;color:var(--primary);">Version: 2025-LTI-V1.0 | 生效日期: 2025年10月1日</h4>
+<h5 style="margin:16px 0 8px;">申请表单内容</h5>
+<ul><li><strong>申请人信息:</strong> 姓名、职位、部门、入职日期</li><li><strong>培训项目:</strong> 培训名称、地点、时长、目标与必要性</li></ul>
+<h5 style="margin:16px 0 8px;">预算估算</h5>
+<ul><li>往返国际机票及国内交通: 约$2,000</li><li>住宿与餐食: 约$300（工厂提供部分餐食）</li><li>签证、保险及其他: 约$300</li><li><strong>合计:</strong> 约$2,600</li></ul>
+<h5 style="margin:16px 0 8px;">审批流程</h5>
+<ul><li><strong>1. 运营/部门经理审核:</strong> 签署意见</li><li><strong>2. 总经理最终审批:</strong> 批准/拒绝/其他</li></ul>
+<h5 style="margin:16px 0 8px;">培训目标示例</h5>
+<ul><li>深入学习HDI和多层刚挠结合板的核心制造参数</li><li>协调2026年新产品线以确保美国销售策略与总部产能同步</li><li>观察IPC质量标准在生产环境中的实际实施</li></ul>
+<h5 style="margin:16px 0 8px;">培训后要求</h5>
+<ul><li>提交正式培训成果报告</li><li>向团队分享技术更新</li><li>制定美国市场推广计划</li></ul>
+<h5 style="margin:16px 0 8px;">表格编号</h5>
+<p style="margin:8px 0;">LTI-TR-2025-003 (示例)</p>`
+        }
+    };
+
+    // ── Customer Management ──
+    let customers = JSON.parse(localStorage.getItem('lti_customers') || '[]');
+
+    function saveCustomers() {
+        localStorage.setItem('lti_customers', JSON.stringify(customers));
+    }
+
+    function openCustomerModal() {
+        resetModalToAdd();
+        populateSalesReps();
+        document.getElementById('addCustomerModal').classList.add('open');
+    }
+
+    function populateSalesReps() {
+        const sel = document.getElementById('c_salesRep');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">-- Unassigned --</option>';
+        teamMembers.forEach(m => { sel.innerHTML += '<option value="' + m.id + '">' + m.name + '</option>'; });
+    }
+
+    function addCustomer() {
+        const company = document.getElementById('c_company').value.trim();
+        const contact = document.getElementById('c_contact').value.trim();
+        if (!company || !contact) {
+            alert('Company and Contact are required.');
+            return;
+        }
+        const customer = {
+            id: Date.now(),
+            company,
+            contact,
+            email: document.getElementById('c_email').value.trim(),
+            phone: document.getElementById('c_phone').value.trim(),
+            state: document.getElementById('c_state').value,
+            salesRep: document.getElementById('c_salesRep').value,
+            salesRepName: document.getElementById('c_salesRep').selectedOptions[0] ? document.getElementById('c_salesRep').selectedOptions[0].text.replace('-- Unassigned --','').trim() : '',
+            type: document.getElementById('c_type').value,
+            pcb: document.getElementById('c_pcb').value.trim(),
+            value: document.getElementById('c_value').value,
+            stage: document.getElementById('c_stage').value,
+            notes: document.getElementById('c_notes').value.trim(),
+            firstContact: document.getElementById('c_firstContact').value,
+            followUp: document.getElementById('c_followup').value,
+            lastContact: document.getElementById('c_firstContact').value || new Date().toISOString().split('T')[0]
+        };
+        customers.push(customer);
+        saveCustomers();
+        document.getElementById('addCustomerModal').classList.remove('open');
+        clearCustomerForm();
+        renderCustomers();
+        showToast('Customer added successfully!');
+    }
+
+    function clearCustomerForm() {
+        ['c_company','c_contact','c_email','c_phone','c_city','c_state','c_salesRep','c_pcb','c_value'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        document.getElementById('c_notes').value = '';
+        document.getElementById('c_type').value = 'Enterprise';
+        document.getElementById('c_stage').value = 'lead';
+        document.getElementById('c_firstContact').value = '';
+        document.getElementById('c_followup').value = '';
+    }
+
+    function renderCustomers() {
+        const stageMap = {
+            lead: { col: 'pipeline-lead', badge: 'badge', cls: 'badge draft', label: 'Lead', emoji: '' },
+            contact: { col: 'pipeline-contact', badge: 'badge', cls: 'badge pending', label: 'Contact', emoji: '' },
+            proposal: { col: 'pipeline-proposal', badge: 'badge', cls: 'badge active', label: 'Proposal', emoji: '' },
+            closed: { col: 'pipeline-closed', badge: 'badge', cls: 'badge approved', label: 'Closed', emoji: ' ✓' },
+            payment: { col: 'pipeline-payment', badge: 'badge', cls: 'badge approved', label: 'Payment Done', emoji: ' 💳' }
+        };
+        const typeBadge = { Enterprise: 'badge active', 'Mid-Market': 'badge approved', SMB: 'badge draft' };
+        const typeLabel = { Enterprise: 'Enterprise', 'Mid-Market': 'Mid-Market', SMB: 'SMB' };
+        const stageLabel = { lead: 'Lead', contact: 'Contact', proposal: 'Proposal', closed: 'Closed', payment: 'Payment Done' };
+
+        // Reset pipeline columns
+        ['pipeline-lead','pipeline-contact','pipeline-proposal','pipeline-closed','pipeline-payment'].forEach(colId => {
+            const col = document.getElementById(colId);
+            col.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">No records</div>';
+        });
+
+        const tbody = document.getElementById('customerTableBody');
+        if (customers.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text-muted);">No customers yet. Click <strong>+ Add Customer</strong> to get started.</td></tr>';
+            return;
+        }
+
+        let rows = '';
+        customers.forEach(c => {
+            const sm = stageMap[c.stage] || stageMap.lead;
+            const stageCol = document.getElementById(sm.col);
+            const existing = stageCol.querySelector('.deal-card');
+            if (existing) {
+                existing.remove();
+            }
+            const dealHTML = '<div class="deal-card" id="deal-' + c.id + '"><div class="deal-name">' + c.company + '</div><div class="deal-value">' + (c.value ? '$' + parseInt(c.value).toLocaleString() : '--') + '</div><div class="deal-tag">' + typeLabel[c.type] + '</div><div class="deal-tag" style="background:rgba(201,162,42,0.15);color:var(--accent);font-size:10px;">' + (c.salesRepName ? '📌 ' + c.salesRepName : '📌 Unassigned') + '</div></div>';
+            stageCol.insertAdjacentHTML('beforeend', dealHTML);
+
+            rows += '<tr id="row-' + c.id + '">' +
+                '<td>' + c.company + '</td>' +
+                '<td>' + c.contact + '<br><small style="color:var(--text-muted)">' + c.email + '</small></td>' +
+                '<td>' + (c.city || c.state ? (c.city ? c.city + ', ' : '') + (c.state || '') : '-') + '</td>' +
+                '<td><span class="' + (typeBadge[c.type] || 'badge') + '">' + (typeLabel[c.type] || '-') + '</span></td>' +
+                '<td>' + (c.pcb || '-') + '</td>' +
+                '<td>' + (c.value ? '$' + parseInt(c.value).toLocaleString() : '-') + '</td>' +
+                '<td><span class="' + (sm.cls || 'badge') + '">' + stageLabel[c.stage] + '</span></td>' +
+                '<td>' + (c.firstContact || '-') + '</td>' +
+                '<td>' + (c.followUp ? '<span style="color:var(--warning);font-weight:600;">' + c.followUp + '</span>' : '-') + '</td>' +
+                '<td>' + (c.salesRepName || '-') + '</td>' +
+                '<td><div class="act-btns">' +
+                '<button class="act-btn" onclick="viewCustomer(' + c.id + ')" title="View">👁</button>' +
+                '<button class="act-btn" onclick="editCustomer(' + c.id + ')" title="Edit">✏️</button>' +
+                '<button class="act-btn" onclick="deleteCustomer(' + c.id + ')" title="Delete">🗑</button>' +
+                '</div></td></tr>';
+        });
+        tbody.innerHTML = rows;
+    }
+
+    function viewCustomer(id) {
+        const c = customers.find(x => x.id === id);
+        if (!c) return;
+        const typeLabel = { Enterprise: 'Enterprise', 'Mid-Market': 'Mid-Market', SMB: 'SMB' };
+        const stageLabel = { lead: 'Lead Generation', contact: 'Initial Contact', proposal: 'Proposal Sent', closed: 'Closed Won', payment: 'Payment Done' };
+        alert('📋 Customer Details\n\nCompany: ' + c.company + '\nContact: ' + c.contact + '\nEmail: ' + (c.email || '-') + '\nPhone: ' + (c.phone || '-') + '\nLocation: ' + (c.city || '') + (c.state ? (c.city ? ', ' : '') + c.state : '') + '\nSales Rep: ' + (c.salesRepName || 'Unassigned') + '\nType: ' + (typeLabel[c.type] || '-') + '\nPCB Needs: ' + (c.pcb || '-') + '\nEst. Value: ' + (c.value ? '$' + parseInt(c.value).toLocaleString() : '-') + '\nStage: ' + (stageLabel[c.stage] || '-') + '\nFirst Contact: ' + (c.firstContact || '-') + '\nFollow-up: ' + (c.followUp || '-') + '\nNotes: ' + (c.notes || '-'));
+    }
+
+    function editCustomer(id) {
+        const c = customers.find(x => x.id === id);
+        if (!c) return;
+        document.getElementById('c_company').value = c.company;
+        document.getElementById('c_contact').value = c.contact;
+        document.getElementById('c_email').value = c.email || '';
+        document.getElementById('c_phone').value = c.phone || '';
+        document.getElementById('c_city').value = c.city || '';
+        document.getElementById('c_state').value = c.state || '';
+        document.getElementById('c_salesRep').value = c.salesRep || '';
+        populateSalesReps();
+        document.getElementById('c_type').value = c.type || 'Enterprise';
+        document.getElementById('c_pcb').value = c.pcb || '';
+        document.getElementById('c_value').value = c.value || '';
+        document.getElementById('c_stage').value = c.stage || 'lead';
+        document.getElementById('c_notes').value = c.notes || '';
+        document.getElementById('c_firstContact').value = c.firstContact || '';
+        document.getElementById('c_followup').value = c.followUp || '';
+        // Update modal to edit mode
+        const modal = document.getElementById('addCustomerModal');
+        modal.querySelector('h3').textContent = '✏️ Edit Customer';
+        modal.querySelector('.btn-primary').textContent = 'Update Customer';
+        modal.querySelector('.btn-primary').setAttribute('onclick', 'updateCustomer(' + id + ')');
+        modal.classList.add('open');
+    }
+
+    function updateCustomer(id) {
+        const idx = customers.findIndex(x => x.id === id);
+        if (idx === -1) return;
+        const company = document.getElementById('c_company').value.trim();
+        const contact = document.getElementById('c_contact').value.trim();
+        if (!company || !contact) { alert('Company and Contact are required.'); return; }
+        customers[idx] = {
+            ...customers[idx],
+            company, contact,
+            email: document.getElementById('c_email').value.trim(),
+            phone: document.getElementById('c_phone').value.trim(),
+            state: document.getElementById('c_state').value,
+            salesRep: document.getElementById('c_salesRep').value,
+            salesRepName: document.getElementById('c_salesRep').selectedOptions[0] ? document.getElementById('c_salesRep').selectedOptions[0].text.replace('-- Unassigned --','').trim() : '',
+            type: document.getElementById('c_type').value,
+            pcb: document.getElementById('c_pcb').value.trim(),
+            value: document.getElementById('c_value').value,
+            stage: document.getElementById('c_stage').value,
+            notes: document.getElementById('c_notes').value.trim(),
+            firstContact: document.getElementById('c_firstContact').value,
+            followUp: document.getElementById('c_followup').value
+        };
+        saveCustomers();
+        resetModalToAdd();
+        document.getElementById('addCustomerModal').classList.remove('open');
+        renderCustomers();
+        showToast('Customer updated!');
+    }
+
+    function deleteCustomer(id) {
+        if (!confirm('Delete this customer?')) return;
+        customers = customers.filter(x => x.id !== id);
+        saveCustomers();
+        renderCustomers();
+        showToast('Customer deleted.');
+    }
+
+    function resetModalToAdd() {
+        const modal = document.getElementById('addCustomerModal');
+        modal.querySelector('h3').textContent = '➕ Add New Customer';
+        modal.querySelector('.btn-primary').textContent = 'Add Customer';
+        modal.querySelector('.btn-primary').setAttribute('onclick', 'addCustomer()');
+    }
+
+    function exportCustomers() {
+        if (customers.length === 0) { alert('No customers to export.'); return; }
+        let csv = 'Company,Contact,Email,Phone,City,State,Sales Rep,Type,PCB Needs,Est. Value,Stage,First Contact,Follow-up,Notes\n';
+        customers.forEach(c => {
+            csv += '"' + c.company + '","' + c.contact + '","' + c.email + '","' + c.phone + '","' + (c.city||'') + '","' + (c.state||'') + '","' + c.type + '","' + c.pcb + '","' + c.value + '","' + c.stage + '","' + (c.firstContact||'') + '","' + (c.followUp||'') + '","' + (c.salesRepName||'') + '","' + (c.notes||'').replace(/"/g,'""') + '"\n';
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'longturn_customers_' + new Date().toISOString().split('T')[0] + '.csv';
+        a.click();
+        showToast('Exported ' + customers.length + ' customers!');
+    }
+
+    // ── Sales Team Management ──
+    let teamMembers = JSON.parse(localStorage.getItem('lti_teammembers') || '[]');
+
+    function saveTeam() {
+        localStorage.setItem('lti_teammembers', JSON.stringify(teamMembers));
+    }
+
+    function renderTeam() {
+        const tbody = document.getElementById('teamTableBody');
+        if (teamMembers.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">No team members yet. Click <strong>+ Add Member</strong> to get started.</td></tr>';
+        } else {
+            let rows = '';
+            teamMembers.forEach(m => {
+                const assigned = customers.filter(c => m.assignedCustomers.includes(c.id));
+                const assignedNames = assigned.length > 0 ? assigned.map(c => c.company).join(', ') : 'None';
+                rows += '<tr>' +
+                    '<td><strong>' + m.name + '</strong></td>' +
+                    '<td>' + (m.title || '-') + '</td>' +
+                    '<td>' + (m.region || '-') + '</td>' +
+                    '<td>' + (m.territory || '-') + '</td>' +
+                    '<td><small>' + assignedNames + '</small></td>' +
+                    '<td><span class="badge ' + (m.status === 'Active' ? 'approved' : 'draft') + '">' + (m.status || 'Active') + '</span></td>' +
+                    '<td>' + m.joined + '</td>' +
+                    '<td><div class="act-btns">' +
+                    '<button class="act-btn" onclick="viewMember(' + m.id + ')">👁</button>' +
+                    '<button class="act-btn" onclick="editMember(' + m.id + ')">✏️</button>' +
+                    '<button class="act-btn" onclick="deleteMember(' + m.id + ')">🗑</button>' +
+                    '</div></td></tr>';
+            });
+            tbody.innerHTML = rows;
+        }
+        // Update stats
+        document.getElementById('teamTotal').textContent = teamMembers.length;
+        const regions = [...new Set(teamMembers.map(m => m.region).filter(Boolean))];
+        document.getElementById('teamRegions').textContent = regions.length;
+        const assignedIds = [...new Set(teamMembers.flatMap(m => m.assignedCustomers))];
+        document.getElementById('teamAccounts').textContent = assignedIds.length;
+    }
+
+    function addMember() {
+        const name = document.getElementById('m_name').value.trim();
+        if (!name) { alert('Name is required.'); return; }
+        const assignedStr = document.getElementById('m_customers').value.trim();
+        const assignedCustomers = assignedStr ? assignedStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)) : [];
+        const member = {
+            id: Date.now(),
+            name,
+            title: document.getElementById('m_title').value.trim(),
+            email: document.getElementById('m_email').value.trim(),
+            phone: document.getElementById('m_phone').value.trim(),
+            region: document.getElementById('m_region').value,
+            territory: document.getElementById('m_territory').value.trim(),
+            location: document.getElementById('m_location').value,
+            role: document.getElementById('m_role').value,
+            assignedCustomers,
+            notes: document.getElementById('m_notes').value.trim(),
+            status: 'Active',
+            joined: new Date().toISOString().split('T')[0]
+        };
+        teamMembers.push(member);
+        saveTeam();
+        resetMemberModal();
+        document.getElementById('addMemberModal').classList.remove('open');
+        renderTeam();
+        showToast('Team member added!');
+    }
+
+    function resetMemberModal() {
+        ['m_name','m_title','m_email','m_phone','m_territory','m_customers','m_notes'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        document.getElementById('m_region').value = '';
+        document.getElementById('m_location').value = 'Remote (CA)';
+        document.getElementById('m_role').value = 'Sales Representative';
+        document.getElementById('memberSubmitBtn').textContent = 'Add Member';
+        document.getElementById('memberSubmitBtn').setAttribute('onclick', 'addMember()');
+        document.querySelector('#addMemberModal h3').textContent = '👤 Add Sales Team Member';
+    }
+
+    function viewMember(id) {
+        const m = teamMembers.find(x => x.id === id);
+        if (!m) return;
+        const assigned = customers.filter(c => m.assignedCustomers.includes(c.id));
+        const assignedStr = assigned.length > 0 ? assigned.map(c => c.company).join(', ') : 'None';
+        alert('👤 Team Member\n\nName: ' + m.name + '\nTitle: ' + (m.title||'-') + '\nEmail: ' + (m.email||'-') + '\nPhone: ' + (m.phone||'-') + '\nRegion: ' + (m.region||'-') + '\nTerritory: ' + (m.territory||'-') + '\nLocation: ' + (m.location||'-') + '\nRole: ' + (m.role||'-') + '\nAssigned Customers: ' + assignedStr + '\nStatus: ' + (m.status||'Active') + '\nJoined: ' + m.joined + '\nNotes: ' + (m.notes||'-'));
+    }
+
+    function editMember(id) {
+        const m = teamMembers.find(x => x.id === id);
+        if (!m) return;
+        document.getElementById('m_name').value = m.name;
+        document.getElementById('m_title').value = m.title || '';
+        document.getElementById('m_email').value = m.email || '';
+        document.getElementById('m_phone').value = m.phone || '';
+        document.getElementById('m_region').value = m.region || '';
+        document.getElementById('m_territory').value = m.territory || '';
+        document.getElementById('m_location').value = m.location || 'Remote (CA)';
+        document.getElementById('m_role').value = m.role || 'Sales Representative';
+        document.getElementById('m_customers').value = m.assignedCustomers.join(', ');
+        document.getElementById('m_notes').value = m.notes || '';
+        document.getElementById('memberSubmitBtn').textContent = 'Update Member';
+        document.getElementById('memberSubmitBtn').setAttribute('onclick', 'updateMember(' + id + ')');
+        document.querySelector('#addMemberModal h3').textContent = '✏️ Edit Team Member';
+        document.getElementById('addMemberModal').classList.add('open');
+    }
+
+    function updateMember(id) {
+        const idx = teamMembers.findIndex(x => x.id === id);
+        if (idx === -1) return;
+        const name = document.getElementById('m_name').value.trim();
+        if (!name) { alert('Name is required.'); return; }
+        const assignedStr = document.getElementById('m_customers').value.trim();
+        const assignedCustomers = assignedStr ? assignedStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)) : [];
+        teamMembers[idx] = {
+            ...teamMembers[idx],
+            name,
+            title: document.getElementById('m_title').value.trim(),
+            email: document.getElementById('m_email').value.trim(),
+            phone: document.getElementById('m_phone').value.trim(),
+            region: document.getElementById('m_region').value,
+            territory: document.getElementById('m_territory').value.trim(),
+            location: document.getElementById('m_location').value,
+            role: document.getElementById('m_role').value,
+            assignedCustomers,
+            notes: document.getElementById('m_notes').value.trim()
+        };
+        saveTeam();
+        resetMemberModal();
+        document.getElementById('addMemberModal').classList.remove('open');
+        renderTeam();
+        showToast('Team member updated!');
+    }
+
+    function deleteMember(id) {
+        if (!confirm('Delete this team member?')) return;
+        teamMembers = teamMembers.filter(x => x.id !== id);
+        saveTeam();
+        renderTeam();
+        showToast('Team member deleted.');
+    }
+
+    function exportTeam() {
+        if (teamMembers.length === 0) { alert('No team members to export.'); return; }
+        let csv = 'Name,Title,Email,Phone,Region,Territory,Location,Role,Assigned Customer IDs,Status,Joined,Notes\n';
+        teamMembers.forEach(m => {
+            csv += '"' + m.name + '","' + m.title + '","' + m.email + '","' + m.phone + '","' + (m.region||'') + '","' + m.territory + '","' + (m.location||'') + '","' + (m.role||'') + '","' + m.assignedCustomers.join('|') + '","' + (m.status||'Active') + '","' + m.joined + '","' + (m.notes||'').replace(/"/g,'""') + '"\n';
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'longturn_team_' + new Date().toISOString().split('T')[0] + '.csv';
+        a.click();
+        showToast('Exported ' + teamMembers.length + ' team members!');
+    }
+
+    // Init
+    renderTeam();
+    renderCustomers();
+    renderUserMgmt && renderUserMgmt();
+    // Auth gate
+    if (!currentUser) {
+        // No user → hide app, show auth
+        document.querySelector('.main').style.display = 'none';
+        document.querySelector('.sidebar').style.display = 'none';
+    } else {
+        // Logged in → hide auth screen
+        const auth = document.getElementById('authScreen');
+        if (auth) { auth.style.display = 'none'; }
+    }
+
+    // ── Reimbursement Management ──
+    let reimbursements = JSON.parse(localStorage.getItem('lti_reimbursements') || '[]');
+
+    function saveReimbursements() {
+        localStorage.setItem('lti_reimbursements', JSON.stringify(reimbursements));
+    }
+
+    function openReimburseModal(id) {
+        if (id) {
+            const r = reimbursements.find(x => x.id === id);
+            if (r) {
+                document.getElementById('r_purpose').value = r.purpose;
+                document.getElementById('r_applicant').value = r.applicant;
+                document.getElementById('r_start').value = r.startDate;
+                document.getElementById('r_end').value = r.endDate;
+                document.getElementById('r_transport').value = r.transport;
+                document.getElementById('r_hotel').value = r.hotel;
+                document.getElementById('r_meal').value = r.meal;
+                document.getElementById('r_other').value = r.other;
+                document.getElementById('r_notes').value = r.notes || '';
+                document.getElementById('r_status').value = r.status;
+                document.getElementById('reimburseModal').querySelector('h3').textContent = '✏️ Edit Reimbursement';
+                document.getElementById('reimburseSubmitBtn').textContent = 'Update';
+                document.getElementById('reimburseSubmitBtn').onclick = () => updateReimbursement(id);
+            }
+        } else {
+            ['r_purpose','r_applicant','r_start','r_end','r_transport','r_hotel','r_meal','r_other','r_notes'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('r_status').value = 'pending';
+            document.getElementById('reimburseModal').querySelector('h3').textContent = '💰 New Reimbursement';
+            document.getElementById('reimburseSubmitBtn').textContent = 'Submit';
+            document.getElementById('reimburseSubmitBtn').onclick = submitReimbursement;
+        }
+        document.getElementById('reimburseModal').classList.add('open');
+    }
+
+    function submitReimbursement() {
+        const applicant = document.getElementById('r_applicant').value.trim();
+        const purpose = document.getElementById('r_purpose').value.trim();
+        if (!applicant || !purpose) { alert('Applicant and Purpose are required.'); return; }
+        const r = {
+            id: Date.now(),
+            applicant, purpose,
+            startDate: document.getElementById('r_start').value,
+            endDate: document.getElementById('r_end').value,
+            transport: document.getElementById('r_transport').value || '0',
+            hotel: document.getElementById('r_hotel').value || '0',
+            meal: document.getElementById('r_meal').value || '0',
+            other: document.getElementById('r_other').value || '0',
+            notes: document.getElementById('r_notes').value.trim(),
+            status: 'pending',
+            submitted: new Date().toISOString().split('T')[0]
+        };
+        reimbursements.push(r);
+        saveReimbursements();
+        document.getElementById('reimburseModal').classList.remove('open');
+        renderReimbursements();
+        showToast('Reimbursement submitted!');
+    }
+
+    function updateReimbursement(id) {
+        const idx = reimbursements.findIndex(x => x.id === id);
+        if (idx === -1) return;
+        reimbursements[idx] = {
+            ...reimbursements[idx],
+            applicant: document.getElementById('r_applicant').value.trim(),
+            purpose: document.getElementById('r_purpose').value.trim(),
+            startDate: document.getElementById('r_start').value,
+            endDate: document.getElementById('r_end').value,
+            transport: document.getElementById('r_transport').value || '0',
+            hotel: document.getElementById('r_hotel').value || '0',
+            meal: document.getElementById('r_meal').value || '0',
+            other: document.getElementById('r_other').value || '0',
+            notes: document.getElementById('r_notes').value.trim(),
+            status: document.getElementById('r_status').value
+        };
+        saveReimbursements();
+        document.getElementById('reimburseModal').classList.remove('open');
+        renderReimbursements();
+        showToast('Reimbursement updated!');
+    }
+
+    function renderReimbursements(filter = '') {
+        const tbody = document.getElementById('reimbTableBody');
+        const data = filter ? reimbursements.filter(r => r.status === filter) : reimbursements;
+        const statusLabel = { pending: '待审批', approved: '已批准', rejected: '已驳回' };
+        const statusClass = { pending: 'pending', approved: 'approved', rejected: 'rejected' };
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted);">暂无报销记录</td></tr>';
+        } else {
+            tbody.innerHTML = data.map(r => {
+                const total = (parseFloat(r.transport)||0) + (parseFloat(r.hotel)||0) + (parseFloat(r.meal)||0) + (parseFloat(r.other)||0);
+                const dates = [r.startDate, r.endDate].filter(Boolean).join(' ~ ');
+                return '<tr>' +
+                    '<td>#RC-' + r.submitted?.split('-')[0] + '-' + String(reimbursements.indexOf(r)+1).padStart(3,'0') + '</td>' +
+                    '<td>' + r.purpose + '</td>' +
+                    '<td>' + r.applicant + '</td>' +
+                    '<td>$' + total.toLocaleString() + '</td>' +
+                    '<td>' + (dates || '-') + '</td>' +
+                    '<td><span class="badge ' + (statusClass[r.status]||'pending') + '">' + (statusLabel[r.status]||'待审批') + '</span></td>' +
+                    '<td><div class="act-btns">' +
+                    '<button class="act-btn" onclick="viewReimbursement(' + r.id + ')">👁</button>' +
+                    '<button class="act-btn" onclick="openReimburseModal(' + r.id + ')">✏️</button>' +
+                    '<button class="act-btn" onclick="deleteReimbursement(' + r.id + ')">🗑</button>' +
+                    '</div></td></tr>';
+            }).join('');
+        }
+    }
+
+    function viewReimbursement(id) {
+        const r = reimbursements.find(x => x.id === id);
+        if (!r) return;
+        const total = (parseFloat(r.transport)||0) + (parseFloat(r.hotel)||0) + (parseFloat(r.meal)||0) + (parseFloat(r.other)||0);
+        alert('💰 Reimbursement\n\nApplicant: ' + r.applicant + '\nPurpose: ' + r.purpose + '\nDates: ' + (r.startDate||'') + ' ~ ' + (r.endDate||'') + '\nTransport: $' + r.transport + '\nHotel: $' + r.hotel + '\nMeal: $' + r.meal + '\nOther: $' + r.other + '\nTotal: $' + total.toLocaleString() + '\nStatus: ' + (r.status==='approved'?'Approved':r.status==='rejected'?'Rejected':'Pending') + '\nNotes: ' + (r.notes||'-'));
+    }
+
+    function deleteReimbursement(id) {
+        if (!confirm('Delete this reimbursement?')) return;
+        reimbursements = reimbursements.filter(x => x.id !== id);
+        saveReimbursements();
+        renderReimbursements();
+        showToast('Reimbursement deleted.');
+    }
+
+    function filterReimbursements(val) {
+        renderReimbursements(val);
+    }
+
+    function exportReimbursements() {
+        if (reimbursements.length === 0) { alert('No records to export.'); return; }
+        let csv = 'ID,Applicant,Purpose,Start Date,End Date,Transport,Hotel,Meal,Other,Total,Status,Notes\n';
+        reimbursements.forEach(r => {
+            const total = (parseFloat(r.transport)||0) + (parseFloat(r.hotel)||0) + (parseFloat(r.meal)||0) + (parseFloat(r.other)||0);
+            csv += '"#RC-' + r.submitted?.split('-')[0] + '-' + String(reimbursements.indexOf(r)+1).padStart(3,'0') + '","' + r.applicant + '","' + r.purpose + '","' + (r.startDate||'') + '","' + (r.endDate||'') + '","' + r.transport + '","' + r.hotel + '","' + r.meal + '","' + r.other + '","' + total + '","' + r.status + '","' + (r.notes||'').replace(/"/g,'""') + '"\n';
+        });
+        downloadCSV(csv, 'reimbursements');
+        showToast('Exported ' + reimbursements.length + ' records!');
+    }
+
+    // ── Training Management ──
+    let trainings = JSON.parse(localStorage.getItem('lti_trainings') || '[]');
+
+    function saveTrainings() {
+        localStorage.setItem('lti_trainings', JSON.stringify(trainings));
+    }
+
+    function openTrainingModal(id) {
+        if (id) {
+            const t = trainings.find(x => x.id === id);
+            if (t) {
+                ['t_name','t_program','t_agency','t_location','t_date','t_fee','t_reason','t_result'].forEach(f => document.getElementById(f).value = '');
+                document.getElementById('t_name').value = t.applicantName;
+                document.getElementById('t_program').value = t.program;
+                document.getElementById('t_agency').value = t.agency;
+                document.getElementById('t_location').value = t.location;
+                document.getElementById('t_date').value = t.date;
+                document.getElementById('t_fee').value = t.fee;
+                document.getElementById('t_reason').value = t.reason;
+                document.getElementById('t_result').value = t.result || '';
+                document.getElementById('t_status').value = t.status;
+                document.getElementById('trainingModal').querySelector('h3').textContent = '✏️ Edit Training';
+                document.getElementById('trainingSubmitBtn').textContent = 'Update';
+                document.getElementById('trainingSubmitBtn').onclick = () => updateTraining(id);
+            }
+        } else {
+            ['t_name','t_program','t_agency','t_location','t_date','t_fee','t_reason','t_result'].forEach(f => document.getElementById(f).value = '');
+            document.getElementById('t_status').value = 'pending';
+            document.getElementById('trainingModal').querySelector('h3').textContent = '🎓 New Training Application';
+            document.getElementById('trainingSubmitBtn').textContent = 'Submit';
+            document.getElementById('trainingSubmitBtn').onclick = submitTraining;
+        }
+        document.getElementById('trainingModal').classList.add('open');
+    }
+
+    function submitTraining() {
+        const name = document.getElementById('t_name').value.trim();
+        const program = document.getElementById('t_program').value.trim();
+        if (!name || !program) { alert('Name and Program are required.'); return; }
+        trainings.push({
+            id: Date.now(), applicantName: name, program,
+            agency: document.getElementById('t_agency').value.trim(),
+            location: document.getElementById('t_location').value.trim(),
+            date: document.getElementById('t_date').value,
+            fee: document.getElementById('t_fee').value || '0',
+            reason: document.getElementById('t_reason').value.trim(),
+            result: document.getElementById('t_result').value.trim(),
+            status: 'pending',
+            submitted: new Date().toISOString().split('T')[0]
+        });
+        saveTrainings();
+        document.getElementById('trainingModal').classList.remove('open');
+        renderTrainings();
+        showToast('Training application submitted!');
+    }
+
+    function updateTraining(id) {
+        const idx = trainings.findIndex(x => x.id === id);
+        if (idx === -1) return;
+        trainings[idx] = {
+            ...trainings[idx],
+            applicantName: document.getElementById('t_name').value.trim(),
+            program: document.getElementById('t_program').value.trim(),
+            agency: document.getElementById('t_agency').value.trim(),
+            location: document.getElementById('t_location').value.trim(),
+            date: document.getElementById('t_date').value,
+            fee: document.getElementById('t_fee').value || '0',
+            reason: document.getElementById('t_reason').value.trim(),
+            result: document.getElementById('t_result').value.trim(),
+            status: document.getElementById('t_status').value
+        };
+        saveTrainings();
+        document.getElementById('trainingModal').classList.remove('open');
+        renderTrainings();
+        showToast('Training updated!');
+    }
+
+    function renderTrainings(filter = '') {
+        const tbody = document.getElementById('trainingTableBody');
+        const data = filter ? trainings.filter(t => t.status === filter) : trainings;
+        const statusLabel = { pending: '待审批', approved: '已批准', completed: '已完成', rejected: '已驳回' };
+        const statusClass = { pending: 'pending', approved: 'approved', completed: 'active', rejected: 'rejected' };
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">暂无培训记录</td></tr>';
+        } else {
+            tbody.innerHTML = data.map(t => {
+                return '<tr>' +
+                    '<td>#TR-' + t.submitted?.split('-')[0] + '-' + String(trainings.indexOf(t)+1).padStart(3,'0') + '</td>' +
+                    '<td>' + t.program + '</td><td>' + t.applicantName + '</td><td>' + (t.agency||'-') + '</td>' +
+                    '<td>$' + (parseFloat(t.fee)||0).toLocaleString() + '</td><td>' + (t.date||'-') + '</td>' +
+                    '<td><span class="badge ' + (statusClass[t.status]||'pending') + '">' + (statusLabel[t.status]||'待审批') + '</span></td>' +
+                    '<td><div class="act-btns">' +
+                    '<button class="act-btn" onclick="viewTraining(' + t.id + ')">👁</button>' +
+                    '<button class="act-btn" onclick="openTrainingModal(' + t.id + ')">✏️</button>' +
+                    '<button class="act-btn" onclick="deleteTraining(' + t.id + ')">🗑</button>' +
+                    '</div></td></tr>';
+            }).join('');
+        }
+    }
+
+    function viewTraining(id) {
+        const t = trainings.find(x => x.id === id);
+        if (!t) return;
+        alert('🎓 Training\n\nApplicant: ' + t.applicantName + '\nProgram: ' + t.program + '\nAgency: ' + (t.agency||'-') + '\nLocation: ' + (t.location||'-') + '\nDate: ' + (t.date||'-') + '\nFee: $' + (parseFloat(t.fee)||0).toLocaleString() + '\nReason: ' + (t.reason||'-') + '\nResult: ' + (t.result||'-') + '\nStatus: ' + t.status);
+    }
+
+    function deleteTraining(id) {
+        if (!confirm('Delete this training record?')) return;
+        trainings = trainings.filter(x => x.id !== id);
+        saveTrainings();
+        renderTrainings();
+        showToast('Training deleted.');
+    }
+
+    function filterTraining(val) { renderTrainings(val); }
+
+    function exportTraining() {
+        if (trainings.length === 0) { alert('No records to export.'); return; }
+        let csv = 'ID,Applicant,Program,Agency,Location,Date,Fee,Reason,Result,Status\n';
+        trainings.forEach(t => csv += '"#TR-' + t.submitted?.split('-')[0] + '-' + String(trainings.indexOf(t)+1).padStart(3,'0') + '","' + t.applicantName + '","' + t.program + '","' + (t.agency||'') + '","' + (t.location||'') + '","' + (t.date||'') + '","' + t.fee + '","' + t.reason + '","' + (t.result||'') + '","' + t.status + '"\n');
+        downloadCSV(csv, 'training');
+        showToast('Exported ' + trainings.length + ' records!');
+    }
+
+    // ── Order Management ──
+    let orders = JSON.parse(localStorage.getItem('lti_orders') || '[]');
+
+    function saveOrders() {
+        localStorage.setItem('lti_orders', JSON.stringify(orders));
+    }
+
+    function openOrderModal(id) {
+        if (id) {
+            const o = orders.find(x => x.id === id);
+            if (o) {
+                ['o_customer','o_spec','o_qty','o_amount','o_delivery','o_notes'].forEach(f => document.getElementById(f).value = '');
+                document.getElementById('o_customer').value = o.customer;
+                document.getElementById('o_spec').value = o.spec;
+                document.getElementById('o_qty').value = o.qty;
+                document.getElementById('o_amount').value = o.amount;
+                document.getElementById('o_delivery').value = o.delivery;
+                document.getElementById('o_notes').value = o.notes || '';
+                document.getElementById('o_status').value = o.status;
+                document.getElementById('orderModal').querySelector('h3').textContent = '✏️ Edit Order';
+                document.getElementById('orderSubmitBtn').textContent = 'Update';
+                document.getElementById('orderSubmitBtn').onclick = () => updateOrder(id);
+            }
+        } else {
+            ['o_customer','o_spec','o_qty','o_amount','o_delivery','o_notes'].forEach(f => document.getElementById(f).value = '');
+            document.getElementById('o_status').value = 'pending';
+            document.getElementById('orderModal').querySelector('h3').textContent = '🌍 New Order';
+            document.getElementById('orderSubmitBtn').textContent = 'Create Order';
+            document.getElementById('orderSubmitBtn').onclick = submitOrder;
+        }
+        document.getElementById('orderModal').classList.add('open');
+    }
+
+    function submitOrder() {
+        const customer = document.getElementById('o_customer').value.trim();
+        if (!customer) { alert('Customer is required.'); return; }
+        orders.push({
+            id: Date.now(), customer,
+            spec: document.getElementById('o_spec').value.trim(),
+            qty: document.getElementById('o_qty').value.trim(),
+            amount: document.getElementById('o_amount').value || '0',
+            delivery: document.getElementById('o_delivery').value,
+            notes: document.getElementById('o_notes').value.trim(),
+            status: 'pending',
+            created: new Date().toISOString().split('T')[0]
+        });
+        saveOrders();
+        document.getElementById('orderModal').classList.remove('open');
+        renderOrders();
+        showToast('Order created!');
+    }
+
+    function updateOrder(id) {
+        const idx = orders.findIndex(x => x.id === id);
+        if (idx === -1) return;
+        orders[idx] = {
+            ...orders[idx],
+            customer: document.getElementById('o_customer').value.trim(),
+            spec: document.getElementById('o_spec').value.trim(),
+            qty: document.getElementById('o_qty').value.trim(),
+            amount: document.getElementById('o_amount').value || '0',
+            delivery: document.getElementById('o_delivery').value,
+            notes: document.getElementById('o_notes').value.trim(),
+            status: document.getElementById('o_status').value
+        };
+        saveOrders();
+        document.getElementById('orderModal').classList.remove('open');
+        renderOrders();
+        showToast('Order updated!');
+    }
+
+    function renderOrders(filter = '') {
+        const tbody = document.getElementById('ordersTableBody');
+        const data = filter ? orders.filter(o => o.status === filter) : orders;
+        const statusLabel = { pending: '待确认', production: '生产中', qc: '质检中', shipping: '运输中', completed: '已完成' };
+        const statusClass = { pending: 'draft', production: 'active', qc: 'active', shipping: 'pending', completed: 'approved' };
+        const statusBars = { pending: 'orders-pending', production: 'orders-production', qc: 'orders-qc', shipping: 'orders-shipping', completed: 'orders-done' };
+        Object.keys(statusBars).forEach(k => { const el = document.getElementById(statusBars[k]); if(el) el.textContent = orders.filter(o=>o.status===k).length; });
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">暂无订单</td></tr>';
+        } else {
+            tbody.innerHTML = data.map(o => {
+                return '<tr>' +
+                    '<td>#ORD-' + o.created?.replace(/-/g,'')?.slice(2,8) + '-' + String(orders.indexOf(o)+1).padStart(3,'0') + '</td>' +
+                    '<td>' + o.customer + '</td><td>' + (o.spec||'-') + '</td><td>' + (o.qty||'-') + '</td>' +
+                    '<td>$' + (parseFloat(o.amount)||0).toLocaleString() + '</td><td>' + (o.delivery||'-') + '</td>' +
+                    '<td><span class="badge ' + (statusClass[o.status]||'draft') + '">' + (statusLabel[o.status]||'待确认') + '</span></td>' +
+                    '<td><div class="act-btns">' +
+                    '<button class="act-btn" onclick="viewOrder(' + o.id + ')">👁</button>' +
+                    '<button class="act-btn" onclick="openOrderModal(' + o.id + ')">✏️</button>' +
+                    '<button class="act-btn" onclick="deleteOrder(' + o.id + ')">🗑</button>' +
+                    '</div></td></tr>';
+            }).join('');
+        }
+    }
+
+    function viewOrder(id) {
+        const o = orders.find(x => x.id === id);
+        if (!o) return;
+        alert('🌍 Order\n\nCustomer: ' + o.customer + '\nSpec: ' + (o.spec||'-') + '\nQty: ' + (o.qty||'-') + '\nAmount: $' + (parseFloat(o.amount)||0).toLocaleString() + '\nDelivery: ' + (o.delivery||'-') + '\nNotes: ' + (o.notes||'-') + '\nStatus: ' + o.status);
+    }
+
+    function deleteOrder(id) {
+        if (!confirm('Delete this order?')) return;
+        orders = orders.filter(x => x.id !== id);
+        saveOrders();
+        renderOrders();
+        showToast('Order deleted.');
+    }
+
+    function filterOrders(val) { renderOrders(val); }
+
+    function exportOrders() {
+        if (orders.length === 0) { alert('No orders to export.'); return; }
+        let csv = 'Order ID,Customer,Spec,Qty,Amount,Delivery,Status,Notes,Created\n';
+        orders.forEach(o => csv += '"#ORD-' + o.created?.replace(/-/g,'')?.slice(2,8) + '-' + String(orders.indexOf(o)+1).padStart(3,'0') + '","' + o.customer + '","' + (o.spec||'') + '","' + o.qty + '","' + o.amount + '","' + (o.delivery||'') + '","' + o.status + '","' + (o.notes||'').replace(/"/g,'""') + '","' + o.created + '"\n');
+        downloadCSV(csv, 'orders');
+        showToast('Exported ' + orders.length + ' orders!');
+    }
+
+    // ── Leave Management ──
+    let leaves = JSON.parse(localStorage.getItem('lti_leaves') || '[]');
+
+    function saveLeaves() {
+        localStorage.setItem('lti_leaves', JSON.stringify(leaves));
+    }
+
+    function submitLeave() {
+        const name = document.getElementById('lv_name').value.trim();
+        const type = document.getElementById('lv_type').value;
+        const start = document.getElementById('lv_start').value;
+        const end = document.getElementById('lv_end').value;
+        if (!name || !start || !end) { alert('Name, start and end date are required.'); return; }
+        const days = Math.ceil((new Date(end) - new Date(start)) / 86400000) + 1;
+        leaves.push({ id: Date.now(), name, type, start, end, days, reason: document.getElementById('lv_reason').value.trim(), status: 'pending', submitted: new Date().toISOString().split('T')[0] });
+        saveLeaves();
+        document.getElementById('attendanceModal').classList.remove('open');
+        renderLeaves();
+        showToast('Leave request submitted!');
+    }
+
+    function renderLeaves() {
+        const tbody = document.getElementById('leaveTableBody');
+        const typeLabel = { vacation: '年假', sick: '病假', personal: '事假' };
+        const statusClass = { pending: 'pending', approved: 'approved', rejected: 'rejected' };
+        if (leaves.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">暂无请假记录</td></tr>';
+        } else {
+            tbody.innerHTML = leaves.map(l => '<tr>' +
+                '<td>' + l.name + '</td><td>' + (typeLabel[l.type]||l.type) + '</td><td>' + l.start + '</td><td>' + l.end + '</td><td>' + l.days + '</td><td>' + (l.reason||'-') + '</td>' +
+                '<td><span class="badge ' + (statusClass[l.status]||'pending') + '">' + (l.status==='approved'?'Approved':l.status==='rejected'?'Rejected':'Pending') + '</span></td>' +
+                '<td><div class="act-btns"><button class="act-btn" onclick="deleteLeave(' + l.id + ')">🗑</button></div></td></tr>'
+            ).join('');
+        }
+    }
+
+    function deleteLeave(id) {
+        if (!confirm('Delete this leave record?')) return;
+        leaves = leaves.filter(x => x.id !== id);
+        saveLeaves();
+        renderLeaves();
+        showToast('Leave deleted.');
+    }
+
+    function submitWeeklyReport() {
+        const name = document.getElementById('rep_name').value.trim();
+        const done = document.getElementById('rep_done').value.trim();
+        const next = document.getElementById('rep_next').value.trim();
+        if (!name || !done || !next) { alert('Name and work details are required.'); return; }
+        showToast('Weekly report submitted!');
+        document.getElementById('reportModal').classList.remove('open');
+    }
+
+    function exportLeave() {
+        if (leaves.length === 0) { alert('No records to export.'); return; }
+        let csv = 'Name,Type,Start,End,Days,Reason,Status\n';
+        leaves.forEach(l => csv += '"' + l.name + '","' + l.type + '","' + l.start + '","' + l.end + '","' + l.days + '","' + (l.reason||'') + '","' + l.status + '"\n');
+        downloadCSV(csv, 'leave');
+        showToast('Exported ' + leaves.length + ' records!');
+    }
+
+    // Shared CSV download helper
+    function downloadCSV(content, prefix) {
+        const blob = new Blob([content], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'longturn_' + prefix + '_' + new Date().toISOString().split('T')[0] + '.csv';
+        a.click();
+    }
+
+    // Render all on load
+    renderReimbursements();
+    renderTrainings();
+    renderOrders();
+    renderLeaves();
+
+    function showToast(msg) {
+        const t = document.createElement('div');
+        t.style.cssText = 'position:fixed;bottom:32px;right:32px;background:#0f2942;color:#fff;padding:14px 22px;border-radius:12px;font-size:13.5px;font-weight:600;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.2);animation:fadeIn .3s ease;';
+        t.textContent = '✅ ' + msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+    }
+
+    function viewPolicy(key) {
+        const p = policies[key];
+        if (p) {
+            document.getElementById('policyTitle').textContent = p.title;
+            document.getElementById('policyContent').innerHTML = p.content;
+            document.getElementById('policyModal').classList.add('open');
+        }
+    }
+
+    // Modal helpers
+    function closeModal(e, id) {
+        if (e.target === e.currentTarget) document.getElementById(id).classList.remove('open');
+    }
+
+    function submitForm(modalId, type) {
+        document.getElementById(modalId).classList.remove('open');
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;bottom:32px;right:32px;background:#0f2942;color:#fff;padding:16px 24px;border-radius:12px;font-size:14px;font-weight:600;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.2);animation:fadeIn .3s ease;';
+        toast.textContent = '✅ ' + type + '已成功提交！';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // 多语言支持
+    const i18n = {
+        zh: {
+            'nav.overview': '概览',
+            'nav.documents': '制度文件',
+            'nav.admin': '行政管理',
+            'nav.business': '业务管理',
+            'menu.dashboard': '仪表盘',
+            'menu.sop': 'SOP 制度库',
+            'menu.weekly': '周会 & 周报',
+            'menu.reimbursement': '出差报销',
+            'menu.attendance': '考勤管理',
+            'menu.training': '培训申请',
+            'menu.sales': '销售跟踪',
+            'menu.salesteam': '销售团队',
+            'menu.orders': '国际订单',
+            'dashboard.welcome': '欢迎回来，Long Turn INC 管理团队',
+            'dashboard.subtitle': 'PCB 全球业务拓展中心 · 成立于 2025',
+            'dashboard.stats.clients': '国际客户总数',
+            'dashboard.stats.revenue': '本季度营收目标',
+            'dashboard.stats.orders': '进行中订单',
+            'dashboard.stats.pending': '待审批事项',
+            'dashboard.quick.reimburse': '提交报销',
+            'dashboard.quick.report': '填写周报',
+            'dashboard.quick.training': '培训申请',
+            'dashboard.quick.orders': '国际订单',
+            'dashboard.recent': '最近动态',
+            'sop.title': 'SOP 制度库',
+            'sop.subtitle': '公司运营政策、标准与程序文件管理',
+            'sop.add': '新增制度',
+            'weekly.title': '周会 & 周报',
+            'weekly.subtitle': '每周工作汇报与会议记录管理',
+            'weekly.submit': '提交本周周报',
+            'weekly.history': '历史周报记录',
+            'reimburse.title': '出差报销',
+            'reimburse.subtitle': '差旅费用申请与审批管理',
+            'reimburse.new': '新建报销申请',
+            'reimburse.list': '报销申请列表',
+            'attendance.title': '考勤管理',
+            'attendance.subtitle': '员工出勤记录与假期管理',
+            'attendance.apply': '申请请假',
+            'attendance.days': '本月出勤天数',
+            'attendance.vacation': '剩余年假（天）',
+            'attendance.hours': '今日工时',
+            'attendance.late': '本月迟到次数',
+            'training.title': '员工外派培训申请',
+            'training.subtitle': '培训申请、审批及成果管理',
+            'training.new': '新建培训申请',
+            'training.list': '培训申请记录',
+            'sales.title': '销售跟踪',
+            'sales.subtitle': '客户开发跟进与销售漏斗管理',
+            'sales.add': '新增客户',
+            'sales.pipeline': '销售漏斗',
+            'sales.followup': '客户跟进记录',
+            'orders.title': '国际订单管理',
+            'orders.subtitle': 'PCB 全球订单跟踪与状态管理',
+            'orders.new': '新建订单',
+            'orders.status': '订单状态'
+        },
+        en: {
+            'nav.overview': 'Overview',
+            'nav.documents': 'Policies',
+            'nav.admin': 'Admin',
+            'nav.business': 'Business',
+            'menu.dashboard': 'Dashboard',
+            'menu.sop': 'SOP Library',
+            'menu.weekly': 'Weekly Report',
+            'menu.reimbursement': 'Travel & Expense',
+            'menu.attendance': 'Attendance',
+            'menu.training': 'Training',
+            'menu.sales': 'Sales Tracking',
+            'menu.salesteam': 'Sales Team',
+            'menu.orders': 'Global Orders',
+            'dashboard.welcome': 'Welcome back, Long Turn INC Management',
+            'dashboard.subtitle': 'PCB Global Business Center · Established 2025',
+            'dashboard.stats.clients': 'International Clients',
+            'dashboard.stats.revenue': 'Quarterly Revenue Target',
+            'dashboard.stats.orders': 'Active Orders',
+            'dashboard.stats.pending': 'Pending Approval',
+            'dashboard.quick.reimburse': 'Submit Reimbursement',
+            'dashboard.quick.report': 'Weekly Report',
+            'dashboard.quick.training': 'Training Request',
+            'dashboard.quick.orders': 'View Orders',
+            'dashboard.recent': 'Recent Activity',
+            'sop.title': 'SOP Policy Library',
+            'sop.subtitle': 'Company Operations Policies & Procedures',
+            'sop.add': 'Add Policy',
+            'weekly.title': 'Weekly Meeting & Report',
+            'weekly.subtitle': 'Weekly Work Report & Meeting Records',
+            'weekly.submit': 'Submit Weekly Report',
+            'weekly.history': 'Report History',
+            'reimburse.title': 'Travel & Expense',
+            'reimburse.subtitle': 'Travel Expense Application & Approval',
+            'reimburse.new': 'New Reimbursement',
+            'reimburse.list': 'Reimbursement List',
+            'attendance.title': 'Attendance Management',
+            'attendance.subtitle': 'Employee Attendance & Leave',
+            'attendance.apply': 'Request Leave',
+            'attendance.days': 'This Month',
+            'attendance.vacation': 'Vacation Days Left',
+            'attendance.hours': 'Today Hours',
+            'attendance.late': 'Late This Month',
+            'training.title': 'External Training Request',
+            'training.subtitle': 'Training Application & Approval',
+            'training.new': 'New Application',
+            'training.list': 'Training Records',
+            'sales.title': 'Sales Tracking',
+            'sales.subtitle': 'Customer Development & Sales Pipeline',
+            'sales.add': 'Add Customer',
+            'sales.pipeline': 'Sales Pipeline',
+            'sales.followup': 'Customer Follow-up',
+            'orders.title': 'Global Order Management',
+            'orders.subtitle': 'PCB Global Order Tracking',
+            'orders.new': 'New Order',
+            'orders.status': 'Order Status'
+        }
+    };
+
+    let currentLang = 'zh';
+
+    function setLang(lang) {
+        currentLang = lang;
+        document.querySelectorAll('#langToggle span').forEach(el => {
+            el.classList.toggle('active', el.dataset.lang === lang);
+        });
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.dataset.i18n;
+            if (i18n[lang][key]) el.textContent = i18n[lang][key];
+        });
+        document.querySelectorAll('.nav-item span').forEach(el => {
+            const nav = el.closest('.nav-item');
+            if (nav && nav.onclick) {
+                const match = nav.onclick.toString().match(/go\('(\w+)'/);
+                if (match) {
+                    const menuKey = 'menu.' + match[1];
+                    if (i18n[lang][menuKey]) el.textContent = i18n[lang][menuKey];
+                }
+            }
+        });
+        document.querySelectorAll('.page-header h2').forEach((el, i) => {
+            const titles = {
+                'dashboard': lang === 'zh' ? '仪表盘' : 'Dashboard',
+                'sop': lang === 'zh' ? 'SOP 制度库' : 'SOP Library',
+                'weekly': lang === 'zh' ? '周会 & 周报' : 'Weekly Report',
+                'reimbursement': lang === 'zh' ? '出差报销' : 'Travel & Expense',
+                'attendance': lang === 'zh' ? '考勤管理' : 'Attendance',
+                'training': lang === 'zh' ? '培训申请' : 'Training',
+                'sales': lang === 'zh' ? '销售跟踪' : 'Sales Tracking',
+                'salesteam': lang === 'zh' ? '销售团队' : 'Sales Team',
+                'orders': lang === 'zh' ? '国际订单' : 'Global Orders'
+            };
+            const section = el.closest('.section');
+            if (section) {
+                const id = section.id;
+                if (titles[id]) el.textContent = titles[id];
+            }
+        });
+        document.querySelectorAll('.page-header p').forEach(el => {
+            const section = el.closest('.section');
+            if (section) {
+                const id = section.id;
+                const key = id + '.subtitle';
+                if (i18n[lang][key]) el.textContent = i18n[lang][key];
+            }
+        });
+    }
+
+    // Week navigation
+    let weekOffset = 0;
+    function changeWeek(dir) {
+        weekOffset += dir;
+        const base = new Date('2025-03-31');
+        base.setDate(base.getDate() + weekOffset * 7);
+        const end = new Date(base);
+        end.setDate(end.getDate() + 6);
+        const fmt = d => (d.getMonth()+1) + '/' + d.getDate();
+        const weekNum = 14 + weekOffset;
+        const label = currentLang === 'zh' 
+            ? '2025 第 ' + weekNum + ' 周（' + fmt(base) + ' – ' + fmt(end) + '）'
+            : '2025 Week ' + weekNum + ' (' + fmt(base) + ' - ' + fmt(end) + ')';
+        document.getElementById('weekLabel').textContent = label;
+    }
+</script>
+
+
+<script>
+
+const AUTH_KEY = 'lti_auth';
+    const USERS_KEY = 'lti_users';
+    const ADMIN_KEY = 'lti_admin_key'; // default admin key
+
+    // ── Default Admin Setup ──
+    function initDefaultAdmin() {
+        // Force reset users to ensure clean state (remove after first successful login)
+        localStorage.removeItem(USERS_KEY);
+        localStorage.removeItem(AUTH_KEY);
+        
+        let users = [];
+        users.push({
+            id: 'admin-001',
+            name: 'Administrator',
+            username: 'admin',
+            password: btoa('lti2025admin'),
+            email: 'longturn2025@gmail.com',
+            role: 'admin',
+            status: 'active',
+            created: new Date().toISOString().split('T')[0]
+        });
+        localStorage.setItem(USERS_KEY, JSON.stringify(users));
+        localStorage.setItem(ADMIN_KEY, 'LTI-ADMIN-2025');
+    }
+    initDefaultAdmin();
+
+    // ── Current User ──
+    let currentUser = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null');
+
+    // ── Auth Screen Logic ──
+    function switchAuthTab(tab) {
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        if (tab === 'login') {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            document.querySelectorAll('.auth-tab')[0].classList.add('active');
+        } else {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+            document.querySelectorAll('.auth-tab')[1].classList.add('active');
+        }
+        document.getElementById('authError').style.display = 'none';
+        document.getElementById('authSuccess').style.display = 'none';
+    }
+
+    function showAuthError(msg) {
+        const el = document.getElementById('authError');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+    function showAuthSuccess(msg) {
+        const el = document.getElementById('authSuccess');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+
+    function handleLogin(e) {
+        e.preventDefault();
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        if (!username || !password) { showAuthError('Username and password are required.'); return false; }
+
+        let users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+        const user = users.find(u => u.username === username && u.password === btoa(password));
+
+        if (!user) { showAuthError('Invalid username or password.'); return false; }
+        if (user.status === 'inactive') { showAuthError('Account is deactivated. Contact admin.'); return false; }
+
+        currentUser = user;
+        localStorage.setItem(AUTH_KEY, JSON.stringify(user));
+        showAuthSuccess('Login successful! Redirecting...');
+        setTimeout(() => { showApp(user); }, 600);
+        return false;
+    }
+
+    function handleRegister(e) {
+        e.preventDefault();
+        try {
+            const name = document.getElementById('regName').value.trim();
+            const username = document.getElementById('regUsername').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const role = document.getElementById('regRole').value;
+            const password = document.getElementById('regPassword').value;
+            const password2 = document.getElementById('regPassword2').value;
+            const adminKey = document.getElementById('regAdminKey').value.trim();
+
+            if (!name || !username) { showAuthError('Name and username are required.'); return false; }
+            if (!password) { showAuthError('Password is required.'); return false; }
+            if (password.length < 6) { showAuthError('Password must be at least 6 characters.'); return false; }
+            if (password !== password2) { showAuthError('Passwords do not match.'); return false; }
+
+            let users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+            if (users.find(u => u.username === username)) { showAuthError('Username already taken.'); return false; }
+
+            // Determine role - admin requires valid key
+            let newRole = role;
+            const validKey = localStorage.getItem(ADMIN_KEY) || 'LTI-ADMIN-2025';
+            if ((role === 'admin' || role === 'manager') && adminKey !== validKey) {
+                newRole = role === 'admin' ? 'sales' : 'sales';
+            }
+
+            const newUser = {
+                id: 'user-' + Date.now(),
+                name, username, email, role: newRole,
+                password: btoa(password),
+                status: 'active', // auto-approve for now
+                created: new Date().toISOString().split('T')[0]
+            };
+            users.push(newUser);
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+
+            showAuthSuccess('Registration successful! You can now login.');
+            document.getElementById('regName').value = '';
+            document.getElementById('regUsername').value = '';
+            document.getElementById('regEmail').value = '';
+            document.getElementById('regPassword').value = '';
+            document.getElementById('regPassword2').value = '';
+            setTimeout(() => { switchAuthTab('login'); document.getElementById('loginUsername').value = username; }, 1800);
+        } catch(err) {
+            showAuthError('Registration failed: ' + err.message);
+        }
+        return false;
+    }
+
+    function guestLogin(e) {
+        e.preventDefault();
+        currentUser = { id: 'guest', name: 'Guest', username: 'guest', role: 'guest', status: 'active' };
+        localStorage.setItem(AUTH_KEY, JSON.stringify(currentUser));
+        showApp(currentUser);
+    }
+
+    function logout() {
+        if (!confirm('Logout?')) return;
+        currentUser = null;
+        localStorage.removeItem(AUTH_KEY);
+        location.reload();
+    }
+
+    // ── Show App ──
+    function showApp(user) {
+        const screen = document.getElementById('authScreen');
+        screen.style.opacity = '0';
+        screen.style.transition = 'opacity .4s';
+        setTimeout(() => {
+            screen.style.display = 'none';
+            // Apply role class to body
+            document.body.classList.remove('is-admin','is-manager','is-sales','is-guest');
+            if (user.role === 'admin') document.body.classList.add('is-admin');
+            if (user.role === 'manager') document.body.classList.add('is-manager');
+            if (user.role === 'guest') document.body.classList.add('is-guest');
+            // Show app containers
+            document.querySelector('.main').style.display = '';
+            document.querySelector('.sidebar').style.display = '';
+            // Show dashboard by default
+            go('dashboard');
+            // Add user badge
+            addUserBadge(user);
+            // Fade in
+            setTimeout(() => {
+                if (user.role !== 'guest') renderUserMgmt && renderUserMgmt();
+                else {
+                    // Guest - hide all nav except dashboard and SOP
+                    document.querySelectorAll('.nav-item').forEach(n => {
+                        const onclick = n.getAttribute('onclick') || '';
+                        if (!onclick.includes('dashboard') && !onclick.includes('sop')) {
+                            n.style.display = 'none';
+                        }
+                    });
+                }
+            }, 50);
+        }, 400);
+    }
+
+    function updateNavByRole(role) {
+        const navItems = document.querySelectorAll('.nav-item');
+        // All visible for admin/manager
+        if (role === 'admin' || role === 'manager') return;
+        if (role === 'guest') return; // handled in showApp
+        // Sales sees everything except user mgmt
+    }
+
+    function addUserBadge(user) {
+        const sidebar = document.querySelector('.sidebar');
+        // Remove existing
+        const existing = document.querySelector('.user-badge');
+        if (existing) existing.remove();
+        // Create badge
+        const badge = document.createElement('div');
+        badge.className = 'user-badge';
+        const roleLabel = { admin:'Admin 管理员', manager:'Manager 经理', sales:'Sales 销售', operations:'Operations 运营', finance:'Finance 财务', hr:'HR 人事', guest:'Guest 访客' };
+        const roleClass = user.role === 'admin' ? 'role-admin' : user.role === 'manager' ? 'role-manager' : '';
+        badge.innerHTML = '<div class="user-name">' + (user.name || user.username) + '</div><div class="user-role ' + roleClass + '">' + (roleLabel[user.role] || user.role) + '</div>';
+        sidebar.insertBefore(badge, sidebar.querySelector('.lang-toggle'));
+        // Add logout button
+        const logoutBtn = document.createElement('div');
+        logoutBtn.style.cssText = 'padding:8px 20px;cursor:pointer;font-size:12px;color:rgba(255,255,255,.4);text-align:center;';
+        logoutBtn.textContent = '登出 Logout';
+        logoutBtn.onclick = logout;
+        sidebar.insertBefore(logoutBtn, sidebar.querySelector('.lang-toggle'));
+    }
+
+    // ── Init Auth Screen ──
+    if (currentUser && currentUser.id !== 'guest') {
+        // Verify user still exists in users list
+        let users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+        const validUser = users.find(u => u.id === currentUser.id);
+        if (validUser) {
+            showApp(validUser);
+        } else {
+            currentUser = null;
+            localStorage.removeItem(AUTH_KEY);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // USER MANAGEMENT (admin only)
+    // ═══════════════════════════════════════════════════════════════
+
+    function renderUserMgmt() {
+        const users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+        const list = document.getElementById('userList');
+        const count = document.getElementById('userCount');
+        if (count) count.textContent = users.length;
+        if (!list) return;
+
+        const roleLabel = { admin:'Admin', manager:'Manager', sales:'Sales', operations:'Ops', finance:'Finance', hr:'HR' };
+        const statusClass = { active:'active', pending:'pending', inactive:'inactive' };
+        const statusText = { active:'Active 正常', pending:'Pending 待审批', inactive:'Inactive 已停用' };
+
+        if (users.length === 0) {
+            list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted);">No users yet.</div>';
+            return;
+        }
+
+        list.innerHTML = users.map(u => {
+            const initials = (u.name || u.username).substring(0,2).toUpperCase();
+            const roleColors = { admin:'#e74c3c', manager:'#6366f1', sales:'#059669', operations:'#d97706', finance:'#0891b2', hr:'#db2777' };
+            const canManage = currentUser && currentUser.role === 'admin' && u.id !== currentUser.id;
+            let html = '<div class="user-row">' +
+                '<div class="user-avatar" style="background:' + (roleColors[u.role]||'var(--primary)') + ';">' + initials + '</div>' +
+                '<div class="user-info">' +
+                    '<div class="user-info-name">' + (u.name || u.username) + ' <span style="font-size:11px;color:var(--text-muted);">@' + u.username + '</span></div>' +
+                    '<div class="user-info-meta">' + (u.email||'') + ' · ' + (roleLabel[u.role]||u.role) + '</div>' +
+                '</div>' +
+                '<span class="user-status ' + (statusClass[u.status]||'pending') + '">' + (statusText[u.status]||u.status) + '</span>';
+            if (canManage) {
+                html += '<div class="act-btns">' +
+                    '<button class="act-btn" onclick="editUser(' + JSON.stringify(u.id) + ')" title="Edit">✏️</button>';
+                if (u.status === 'pending') {
+                    html += '<button class="act-btn" onclick="approveUser(' + JSON.stringify(u.id) + ')" title="Approve">✅</button>';
+                }
+                html += '<button class="act-btn" onclick="deleteUser(' + JSON.stringify(u.id) + ')" title="Delete">🗑</button>' +
+                    '</div>';
+            }
+            html += '</div>';
+            return html;
+        }).join('');
+    }
+
+    function openAddUserModal() {
+        editingUserId = null;
+        ['u_name','u_username','u_email','u_password'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('u_role').value = 'sales';
+        document.getElementById('u_status').value = 'active';
+        document.getElementById('userModalTitle').textContent = '＋ Add User';
+        document.getElementById('userModal').classList.add('open');
+    }
+
+    let editingUserId = null;
+
+    function editUser(id) {
+        let users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+        const u = users.find(x => x.id === id);
+        if (!u) return;
+        editingUserId = id;
+        document.getElementById('u_name').value = u.name || '';
+        document.getElementById('u_username').value = u.username || '';
+        document.getElementById('u_email').value = u.email || '';
+        document.getElementById('u_password').value = atob(u.password) || '';
+        document.getElementById('u_role').value = u.role || 'sales';
+        document.getElementById('u_status').value = u.status || 'active';
+        document.getElementById('userModalTitle').textContent = '✏️ Edit User: ' + (u.name || u.username);
+        document.getElementById('userModal').classList.add('open');
+    }
+
+    function saveUser() {
+        const name = document.getElementById('u_name').value.trim();
+        const username = document.getElementById('u_username').value.trim();
+        const email = document.getElementById('u_email').value.trim();
+        const password = document.getElementById('u_password').value;
+        const role = document.getElementById('u_role').value;
+        const status = document.getElementById('u_status').value;
+        if (!name || !username || !password) { alert('Name, username and password are required.'); return; }
+        if (password.length < 6) { alert('Password must be at least 6 characters.'); return; }
+
+        let users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+        if (editingUserId) {
+            const idx = users.findIndex(x => x.id === editingUserId);
+            if (idx !== -1) {
+                users[idx] = { ...users[idx], name, username, email, role, status, password: btoa(password) };
+            }
+        } else {
+            // Check duplicate username
+            if (users.find(u => u.username === username)) { alert('Username already exists.'); return; }
+            users.push({ id: 'user-' + Date.now(), name, username, email, role, status, password: btoa(password), created: new Date().toISOString().split('T')[0] });
+        }
+        localStorage.setItem(USERS_KEY, JSON.stringify(users));
+        document.getElementById('userModal').classList.remove('open');
+        renderUserMgmt();
+        showToast('User saved!');
+    }
+
+    function approveUser(id) {
+        let users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+        const idx = users.findIndex(u => u.id === id);
+        if (idx !== -1) { users[idx].status = 'active'; localStorage.setItem(USERS_KEY, JSON.stringify(users)); renderUserMgmt(); showToast('User approved!'); }
+    }
+
+    function deleteUser(id) {
+        if (!confirm('Delete this user?')) return;
+        let users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+        users = users.filter(u => u.id !== id);
+        localStorage.setItem(USERS_KEY, JSON.stringify(users));
+        renderUserMgmt();
+        showToast('User deleted.');
+    }
+
+    // Add nav item for User Management
+    function addUserMgmtNav() {
+        // Find the nav-section after nav.business
+        const navSections = document.querySelectorAll('.nav-section');
+        // Insert after the last nav-section
+        if (navSections.length > 0) {
+            const lastNav = navSections[navSections.length - 1];
+            const mgmtLink = document.createElement('div');
+            mgmtLink.className = 'nav-item admin-only';
+            mgmtLink.setAttribute('onclick', "go('users',this)");
+            mgmtLink.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>User Management</span>';
+            lastNav.appendChild(mgmtLink);
+        }
+    }
+
+    // Run after page load
+    setTimeout(() => {
+        addUserMgmtNav();
+        if (currentUser && currentUser.role === 'admin') renderUserMgmt && renderUserMgmt();
+    }, 200);
+
+</script>
+</body>
+</html>
