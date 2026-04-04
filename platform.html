@@ -1239,7 +1239,16 @@
     let customers = JSON.parse(localStorage.getItem('lti_customers') || '[]');
 
     function saveCustomers() {
-        localStorage.setItem('lti_customers', JSON.stringify(customers));
+        try {
+            localStorage.setItem('lti_customers', JSON.stringify(customers));
+            // Verify save
+            const saved = JSON.parse(localStorage.getItem('lti_customers') || '[]');
+            if (saved.length !== customers.length) {
+                console.error('Customer save failed! Expected', customers.length, 'got', saved.length);
+            }
+        } catch(e) {
+            console.error('saveCustomers error:', e);
+        }
     }
 
     function openCustomerModal() {
@@ -1301,6 +1310,8 @@
     }
 
     function renderCustomers() {
+        // Always re-sync from localStorage
+        customers = JSON.parse(localStorage.getItem('lti_customers') || '[]');
         const stageMap = {
             lead: { col: 'pipeline-lead', badge: 'badge', cls: 'badge draft', label: 'Lead', emoji: '' },
             contact: { col: 'pipeline-contact', badge: 'badge', cls: 'badge pending', label: 'Contact', emoji: '' },
