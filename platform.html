@@ -774,6 +774,8 @@
 <section class="section" id="sales">
     <div class="page-header">
         <div><h2 data-i18n="sales.title">Sales Tracking</h2><p data-i18n="sales.subtitle">Customer Development & Sales Pipeline</p></div>
+        <button class="btn btn-outline" onclick="importCustomerData()">📥 Import Data</button>
+        <button class="btn btn-outline" onclick="exportCustomerData()">📤 Export Data</button>
         <button class="btn btn-primary" onclick="openCustomerModal()">＋ Add Customer</button>
     </div>
 
@@ -1310,8 +1312,6 @@
     }
 
     function renderCustomers() {
-        // Always re-sync from localStorage
-        customers = JSON.parse(localStorage.getItem('lti_customers') || '[]');
         const stageMap = {
             lead: { col: 'pipeline-lead', badge: 'badge', cls: 'badge draft', label: 'Lead', emoji: '' },
             contact: { col: 'pipeline-contact', badge: 'badge', cls: 'badge pending', label: 'Contact', emoji: '' },
@@ -2513,6 +2513,77 @@ const AUTH_KEY = 'lti_auth';
         logoutBtn.textContent = '登出 Logout';
         logoutBtn.onclick = logout;
         sidebar.insertBefore(logoutBtn, sidebar.querySelector('.lang-toggle'));
+    }
+
+    // ── Data Import/Export for cross-device sync ──
+    function exportCustomerData() {
+        const data = {
+            customers: customers,
+            teamMembers: teamMembers,
+            reimbursements: reimbursements,
+            trainings: trainings,
+            orders: orders,
+            leaves: leaves,
+            exported: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'longturn_backup_' + new Date().toISOString().split('T')[0] + '.json';
+        a.click();
+        showToast('All data exported!');
+    }
+
+    function importCustomerData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    let count = 0;
+                    if (data.customers && data.customers.length > 0) {
+                        // Merge: add new customers, skip existing by id
+                        data.customers.forEach(c => {
+                            if (!customers.find(x => x.id === c.id)) {
+                                customers.push(c);
+                                count++;
+                            }
+                        });
+                        saveCustomers();
+                    }
+                    if (data.teamMembers && data.teamMembers.length > 0) {
+                        data.teamMembers.forEach(m => {
+                            if (!teamMembers.find(x => x.id === m.id)) {
+                                teamMembers.push(m);
+                                count++;
+                            }
+                        });
+                        saveTeam();
+                    }
+                    if (data.reimbursements) { reimbursements = data.reimbursements; saveReimbursements(); count += data.reimbursements.length; }
+                    if (data.trainings) { trainings = data.trainings; saveTrainings(); count += data.trainings.length; }
+                    if (data.orders) { orders = data.orders; saveOrders(); count += data.orders.length; }
+                    if (data.leaves) { leaves = data.leaves; saveLeaves(); count += data.leaves.length; }
+                    // Re-render all
+                    renderCustomers();
+                    renderTeam();
+                    renderReimbursements();
+                    renderTrainings();
+                    renderOrders();
+                    renderLeaves();
+                    showToast('Imported ' + count + ' records!');
+                } catch(err) {
+                    alert('Import failed: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
     }
 
     // ── Init Auth Screen ──
