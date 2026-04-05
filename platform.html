@@ -1239,6 +1239,15 @@
 
     // ── Customer Management ──
     let customers = JSON.parse(localStorage.getItem('lti_customers') || '[]');
+    // Pre-loaded customer records
+    if (customers.length === 0) {
+        customers = [
+            { id: 1, company: 'NPI Technologies', contact: 'Kiet Q. Thai', title: 'General/Operations Manager', email: '', phone: '469-628-4378', city: 'Richardson', state: 'Texas', salesRep: '', salesRepName: '', type: 'Enterprise', pcb: '', value: '', stage: 'lead', notes: 'www.npitechnologies.com | O: 972-968-0400', firstContact: '2025-04-01', followUp: '', lastContact: '2025-04-01' },
+            { id: 2, company: 'EM Inc', contact: 'Jason Chin', title: 'Principal', email: 'JasonChin@eminc.com', phone: '(714) 855-5284', city: 'Santa Ana', state: 'California', salesRep: '', salesRepName: '', type: 'Enterprise', pcb: '', value: '', stage: 'lead', notes: 'www.eminc.com | P: (714) 979-2228 EXT 132', firstContact: '2025-04-01', followUp: '', lastContact: '2025-04-01' },
+            { id: 3, company: 'Battery Management Technology Corporation (BM Tech)', contact: 'Michael Dai', title: 'CEO', email: 'michael.dai@bmtech.com', phone: '214 356 4297', city: 'Plano', state: 'Texas', salesRep: '', salesRepName: '', type: 'Enterprise', pcb: '', value: '', stage: 'lead', notes: 'www.bmtech.com | 1255 West 15th Street, Suite 325, Plano, TX 75075', firstContact: '2025-04-01', followUp: '', lastContact: '2025-04-01' }
+        ];
+        localStorage.setItem('lti_customers', JSON.stringify(customers));
+    }
 
     function saveCustomers() {
         try {
