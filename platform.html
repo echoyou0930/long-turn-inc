@@ -1624,6 +1624,25 @@
         customers = JSON.parse(localStorage.getItem('lti_customers') || '[]');
         teamMembers = JSON.parse(localStorage.getItem('lti_teammembers') || '[]');
         
+        // Pre-load team members if empty
+        const allTeamMembers = [
+            { id: 1, name: 'Jack Tian', role: 'sales', title: 'Sales Representative', email: 'jack.tian@longturn.com', phone: '', location: 'Dallas, TX', state: 'Texas', workplace: 'Remote' },
+            { id: 2, name: 'Jihong Zhao', role: 'sales', title: 'Sales Manager', email: 'jihong.zhao@longturn.com', phone: '', location: 'Dallas, TX', state: 'Texas', workplace: 'Remote' },
+            { id: 3, name: 'Helen Liu', role: 'marketing', title: 'Marketing Representative', email: 'helen.liu@longturn.com', phone: '', location: 'Dallas, TX', state: 'Texas', workplace: 'Remote' },
+            { id: 4, name: 'Echo You', role: 'admin', title: 'Admin', email: 'echo@longturnpcb.com', phone: '', location: 'Dallas, TX', state: 'Texas', workplace: 'Headquarters' }
+        ];
+        let teamChanged = false;
+        allTeamMembers.forEach(m => {
+            if (!teamMembers.find(x => x.id === m.id)) {
+                teamMembers.push(m);
+                teamChanged = true;
+            }
+        });
+        if (teamChanged) {
+            localStorage.setItem('lti_teammembers', JSON.stringify(teamMembers));
+            console.log('LTI: Synced team members. Total:', teamMembers.length);
+        }
+        
         // Pre-load customers — always check all 4 and add any missing ones
         const allCustomers = [
             { id: 1, company: 'NPI Technologies', contact: 'Kiet Q. Thai', title: 'General/Operations Manager', email: '', phone: '469-628-4378', city: 'Richardson', state: 'Texas', salesRep: '', salesRepName: '', type: 'Enterprise', pcb: '', value: '', stage: 'lead', notes: 'www.npitechnologies.com | O: 972-968-0400', firstContact: '2025-04-01', followUp: '', lastContact: '2025-04-01' },
