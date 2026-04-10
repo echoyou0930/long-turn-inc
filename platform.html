@@ -1311,8 +1311,11 @@
     }
 
     function renderCustomers() {
-        // Always re-read from localStorage
-        customers = JSON.parse(localStorage.getItem('lti_customers') || '[]');
+        // Use memory customers (synced in window.onload)
+        // Only read from localStorage if memory is empty
+        if (!customers || customers.length === 0) {
+            customers = JSON.parse(localStorage.getItem('lti_customers') || '[]');
+        }
         const stageMap = {
             lead: { col: 'pipeline-lead', badge: 'badge', cls: 'badge draft', label: 'Lead', emoji: '' },
             contact: { col: 'pipeline-contact', badge: 'badge', cls: 'badge pending', label: 'Contact', emoji: '' },
