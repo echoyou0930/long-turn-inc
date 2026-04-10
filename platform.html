@@ -1476,7 +1476,7 @@
         } else {
             let rows = '';
             teamMembers.forEach(m => {
-                const assigned = customers.filter(c => m.assignedCustomers.includes(c.id));
+                const assigned = customers.filter(c => (m.assignedCustomers || []).includes(c.id));
                 const assignedNames = assigned.length > 0 ? assigned.map(c => c.company).join(', ') : 'None';
                 rows += '<tr>' +
                     '<td><strong>' + m.name + '</strong></td>' +
@@ -1546,7 +1546,7 @@
     function viewMember(id) {
         const m = teamMembers.find(x => x.id === id);
         if (!m) return;
-        const assigned = customers.filter(c => m.assignedCustomers.includes(c.id));
+        const assigned = customers.filter(c => (m.assignedCustomers || []).includes(c.id));
         const assignedStr = assigned.length > 0 ? assigned.map(c => c.company).join(', ') : 'None';
         alert('👤 Team Member\n\nName: ' + m.name + '\nTitle: ' + (m.title||'-') + '\nEmail: ' + (m.email||'-') + '\nPhone: ' + (m.phone||'-') + '\nRegion: ' + (m.region||'-') + '\nTerritory: ' + (m.territory||'-') + '\nLocation: ' + (m.location||'-') + '\nRole: ' + (m.role||'-') + '\nAssigned Customers: ' + assignedStr + '\nStatus: ' + (m.status||'Active') + '\nJoined: ' + m.joined + '\nNotes: ' + (m.notes||'-'));
     }
