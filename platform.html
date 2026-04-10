@@ -1684,18 +1684,24 @@
             { id: 34, company: 'Transline Tech', contact: 'Larry', title: '', email: 'https://translinetech.com/contact-us/', phone: '', city: '', state: 'California', salesRep: '', salesRepName: '', type: 'Enterprise', pcb: '', value: '', stage: 'lead', notes: 'Waiting for the next quottion opportunity', firstContact: '2026-04-01', followUp: '', lastContact: '2026-04-01' },
             { id: 35, company: 'Amazon', contact: 'Luyao', title: '', email: 'luyaos@amazon.com', phone: '', city: '', state: 'California', salesRep: '', salesRepName: '', type: 'Enterprise', pcb: '', value: '', stage: 'lead', notes: 'Initial order placed', firstContact: '2026-04-03', followUp: '', lastContact: '2026-04-03' }
         ];
+        
+        console.log('LTI: Pre-loading customers. Current count:', customers.length);
         let changed = false;
         allCustomers.forEach(c => {
             if (!customers.find(x => x.id === c.id)) {
                 customers.push(c);
                 changed = true;
+                console.log('LTI: Added customer', c.id, c.company);
             }
         });
         if (changed) {
             localStorage.setItem('lti_customers', JSON.stringify(customers));
             console.log('LTI: Synced customers. Total:', customers.length);
+        } else {
+            console.log('LTI: No new customers to add');
         }
         
+        console.log('LTI: About to render', customers.length, 'customers');
         renderTeam();
         renderCustomers();
         renderUserMgmt && renderUserMgmt();
